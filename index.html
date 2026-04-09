@@ -5,45 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>健康紀錄表</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* --- 馬卡龍全版面配色方案 --- */
         :root { 
-            --bg-start: #e0f7f8; /* 起始粉藍綠 */
-            --bg-end: #fffefe;   /* 結束淡白 */
-            --mint-dark: #148f77; /* 加深薄荷綠 (用於文字) */
-            --blue-dark: #2e86c1; /* 加深粉藍 (用於文字) */
-            --text-main: #444;     /* 主文字顏色 */
+            --bg-start: #e0f7f8; 
+            --bg-end: #fffefe;   
         }
-        
         body { 
-            /* 全螢幕漸層背景 */
             background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
-            color: var(--text-main); 
-            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; 
+            color: #444; 
+            font-family: "PingFang TC", sans-serif; 
             padding-bottom: 110px;
             min-height: 100vh;
-            background-attachment: fixed; /* 背景固定，滾動時不變 */
+            background-attachment: fixed;
         }
-        
-        /* --- 膠囊樣式 --- */
         .capsule-container { min-width: 62px; height: 115px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; cursor: pointer; }
         .capsule-bg { width: 44px; height: 78px; background: rgba(255,255,255,0.7); border-radius: 22px; position: relative; overflow: hidden; border: 1.5px solid rgba(255,255,255,0.5); }
         .capsule-fill { position: absolute; bottom: 0; left: 0; right: 0; transition: height 0.5s ease; }
-        .active-ring { border: 3px solid #ff9f43 !important; background: white; shadow: 0 4px 10px rgba(255,159,67,0.2); }
-        
-        /* --- 卡片樣式 (半透明質感) --- */
+        .active-ring { border: 3px solid #ff9f43 !important; background: white; }
         .macaron-card {
             background: rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(10px);
             border: 2px solid rgba(255, 255, 255, 0.8);
             border-radius: 2.5rem;
-            box-shadow: 0 10px 30px rgba(163, 228, 215, 0.1);
         }
-
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .btn-primary { background: linear-gradient(135deg, #a3e4d7 0%, #85c1e9 100%); color: white; shadow: 0 5px 20px rgba(163, 228, 215, 0.3); }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 18px 0; z-index: 100; box-shadow: 0 -5px 25px rgba(0,0,0,0.03); border-radius: 30px 30px 0 0; }
+        .btn-primary { background: linear-gradient(135deg, #a3e4d7 0%, #85c1e9 100%); color: white; }
+        .btn-danger { background: rgba(255, 182, 193, 0.4); color: #ff6b6b; border: 1px solid rgba(255, 107, 107, 0.2); }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 18px 0; z-index: 100; border-radius: 30px 30px 0 0; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; backdrop-filter: blur(8px); }
     </style>
 </head>
@@ -52,17 +42,18 @@
     <header class="p-6 sticky top-0 z-50">
         <div class="flex justify-between items-center mb-6 max-w-md mx-auto relative z-10">
             <div onclick="document.getElementById('date-picker').showPicker()" class="cursor-pointer flex items-center group">
-                <h1 id="display-title" class="text-3xl font-black mr-2 text-gray-900">今天</h1>
-                <i class="fa-solid fa-caret-down text-gray-500 group-hover:text-teal-600 transition-colors"></i>
+                <h1 id="display-title" class="text-2xl font-black mr-2 text-gray-700">今天</h1>
+                <i class="fa-solid fa-caret-down text-gray-400"></i>
             </div>
-            <button onclick="toggleHistory()" class="w-11 h-11 rounded-full bg-white/60 flex items-center justify-center text-gray-500 border border-white/80 shadow-sm backdrop-blur-sm"><i class="fa-solid fa-list-ul text-lg"></i></button>
+            <div class="flex space-x-2">
+                <button onclick="toggleChart()" class="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center text-blue-400 border border-white shadow-sm backdrop-blur-sm"><i class="fa-solid fa-chart-line"></i></button>
+                <button onclick="toggleHistory()" class="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center text-teal-500 border border-white shadow-sm backdrop-blur-sm"><i class="fa-solid fa-list-ul"></i></button>
+            </div>
         </div>
-
-        <div id="date-slider" class="flex overflow-x-auto space-x-2 no-scrollbar max-w-md mx-auto py-2 relative z-10">
-            </div>
+        <div id="date-slider" class="flex overflow-x-auto space-x-2 no-scrollbar max-w-md mx-auto py-2 relative z-10"></div>
     </header>
 
-    <main class="max-w-md mx-auto px-4 mt-6 space-y-7 relative z-10">
+    <main class="max-w-md mx-auto px-4 mt-4 space-y-6 relative z-10">
         <div class="macaron-card p-8 flex justify-around items-center">
             <div class="text-center">
                 <p class="text-[11px] font-bold text-gray-400 uppercase mb-2 tracking-widest">Weight</p>
@@ -78,43 +69,40 @@
             </div>
         </div>
 
-        <div class="macaron-card p-8 space-y-7">
+        <div class="macaron-card p-8 space-y-6">
             <div class="grid grid-cols-3 gap-4">
                 <div class="text-center space-y-2">
                     <label class="text-xs font-bold text-teal-700">體重 (kg)</label>
-                    <input id="i-w" type="number" step="0.1" class="w-full p-5 text-center bg-white/50 rounded-2xl outline-none font-black text-2xl border border-white focus:ring-2 focus:ring-teal-100" placeholder="0.0">
+                    <input id="i-w" type="number" step="0.1" class="w-full p-4 text-center bg-white/50 rounded-2xl outline-none font-black text-xl border border-white" placeholder="0.0">
                 </div>
                 <div class="text-center space-y-2">
                     <label class="text-xs font-bold text-blue-600">蛋白 (g)</label>
-                    <input id="i-p" type="number" class="w-full p-5 text-center bg-white/50 rounded-2xl outline-none font-black text-2xl border border-white focus:ring-2 focus:ring-blue-100" placeholder="0">
+                    <input id="i-p" type="number" class="w-full p-4 text-center bg-white/50 rounded-2xl outline-none font-black text-xl border border-white" placeholder="0">
                 </div>
                 <div class="text-center space-y-2">
                     <label class="text-xs font-bold text-orange-500">碳水 (g)</label>
-                    <input id="i-c" type="number" class="w-full p-5 text-center bg-white/50 rounded-2xl outline-none font-black text-2xl border border-white focus:ring-2 focus:ring-orange-100" placeholder="0">
+                    <input id="i-c" type="number" class="w-full p-4 text-center bg-white/50 rounded-2xl outline-none font-black text-xl border border-white" placeholder="0">
                 </div>
             </div>
-            <textarea id="i-content" rows="2" class="w-full p-5 bg-white/50 rounded-2xl outline-none text-sm italic border border-white focus:ring-2 focus:ring-teal-50" placeholder="紀錄這天的飲食或心情..."></textarea>
-            <button onclick="saveData()" class="btn-primary w-full py-5 rounded-[1.8rem] font-bold text-lg tracking-widest active:scale-95 transition-all shadow-lg">
-                儲存今日進度
-            </button>
+            <textarea id="i-content" rows="2" class="w-full p-4 bg-white/50 rounded-2xl outline-none text-sm italic border border-white" placeholder="紀錄筆記..."></textarea>
+            
+            <div class="space-y-3">
+                <button onclick="saveData()" class="btn-primary w-full py-4 rounded-[1.5rem] font-bold text-lg tracking-widest active:scale-95 transition-all shadow-lg">儲存今日進度</button>
+                <button onclick="deleteData()" class="btn-danger w-full py-3 rounded-[1.5rem] font-bold text-sm tracking-widest active:scale-95 transition-all">刪除此日紀錄</button>
+            </div>
         </div>
     </main>
 
     <div id="history-modal" class="modal items-end sm:items-center justify-center p-4">
         <div class="bg-white/95 backdrop-blur-lg w-full max-w-md rounded-[2.5rem] max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
-            <div class="p-8 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0">
-                <h3 class="font-black text-2xl text-teal-700">數據報表</h3>
-                <button onclick="toggleHistory()" class="text-3xl text-gray-300 hover:text-gray-500">&times;</button>
+            <div class="p-8 border-b border-gray-100 flex justify-between items-center bg-white">
+                <h3 class="font-black text-2xl text-teal-700">歷史數據</h3>
+                <button onclick="toggleHistory()" class="text-3xl text-gray-300">&times;</button>
             </div>
             <div class="overflow-y-auto p-5 flex-1">
                 <table class="w-full text-center">
                     <thead class="text-[11px] text-gray-400 border-b border-gray-100">
-                        <tr>
-                            <th class="py-4 font-bold">日期</th>
-                            <th class="py-4 font-bold">體重</th>
-                            <th class="py-4 font-bold">差距</th>
-                            <th class="py-4 font-bold text-blue-500">P / C</th>
-                        </tr>
+                        <tr><th class="py-4">日期</th><th class="py-4">體重</th><th class="py-4">差距</th><th class="py-4 text-blue-500">P/C</th></tr>
                     </thead>
                     <tbody id="history-table-body" class="divide-y divide-gray-50/50"></tbody>
                 </table>
@@ -122,23 +110,27 @@
         </div>
     </div>
 
+    <div id="chart-modal" class="modal items-center justify-center p-4">
+        <div class="bg-white/95 backdrop-blur-lg w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-black text-xl text-blue-600">體重趨勢圖</h3>
+                <button onclick="toggleChart()" class="text-3xl text-gray-300">&times;</button>
+            </div>
+            <div class="h-64"><canvas id="weightChart"></canvas></div>
+        </div>
+    </div>
+
     <nav class="bottom-nav max-w-md mx-auto">
-        <button class="text-teal-600 flex flex-col items-center">
-            <i class="fa-solid fa-note-sticky text-2xl"></i>
-            <span class="text-[10px] mt-1.5 font-bold">紀錄</span>
-        </button>
-        <button class="text-gray-300 flex flex-col items-center opacity-60">
-            <i class="fa-solid fa-dna text-2xl"></i>
-            <span class="text-[10px] mt-1.5 font-bold">InBody</span>
-        </button>
+        <button class="text-teal-600 flex flex-col items-center"><i class="fa-solid fa-note-sticky text-2xl"></i><span class="text-[10px] mt-1.5 font-bold">紀錄</span></button>
+        <button class="text-gray-300 flex flex-col items-center opacity-60"><i class="fa-solid fa-dna text-2xl"></i><span class="text-[10px] mt-1.5 font-bold">InBody</span></button>
     </nav>
 
     <input type="date" id="date-picker" class="hidden" onchange="setDate(this.value)">
 
     <script>
-        // --- 核心邏輯：保證儲存與日期正確 ---
-        let db = JSON.parse(localStorage.getItem('health_macaron_full_db') || '{}');
+        let db = JSON.parse(localStorage.getItem('health_master_v2') || '{}');
         let selectedDate = new Date().toISOString().split('T')[0];
+        let myChart = null;
 
         function setDate(date) { selectedDate = date; updateUI(); }
 
@@ -146,15 +138,11 @@
             const todayStr = new Date().toISOString().split('T')[0];
             const titleEl = document.getElementById('display-title');
             titleEl.innerText = (selectedDate === todayStr) ? "今天" : selectedDate.replace(/-/g, '/');
-
             renderDateSlider();
             const data = db[selectedDate] || { w: '', p: '', c: '', content: '' };
-            
-            // 數據看板字體加大
             document.getElementById('v-w').innerText = data.w || '--';
             document.getElementById('v-p').innerText = data.p || '0';
             document.getElementById('v-c').innerText = data.c || '0';
-            
             document.getElementById('i-w').value = data.w || '';
             document.getElementById('i-p').value = data.p || '';
             document.getElementById('i-c').value = data.c || '';
@@ -164,52 +152,41 @@
         function renderDateSlider() {
             const slider = document.getElementById('date-slider');
             slider.innerHTML = '';
-            
             for(let i = -3; i <= 3; i++) {
                 let d = new Date(selectedDate);
                 d.setDate(d.getDate() + i);
                 let dateStr = d.toISOString().split('T')[0];
-                
                 let weight = db[dateStr]?.w || '';
                 let isActive = dateStr === selectedDate ? 'active-ring' : '';
-                
-                // 漲跌判斷顏色
                 let prevD = new Date(d); prevD.setDate(d.getDate() - 1);
-                let prevStr = prevD.toISOString().split('T')[0];
-                let prevW = db[prevStr]?.w;
-                
-                let fillColor = "bg-gray-100";
-                let symbol = "";
+                let prevW = db[prevD.toISOString().split('T')[0]]?.w;
+                let fillColor = "bg-gray-100", symbol = "";
                 if (weight && prevW) {
                     fillColor = parseFloat(weight) <= parseFloat(prevW) ? "bg-[#d1f2eb]" : "bg-[#fbeee0]";
                     symbol = parseFloat(weight) <= parseFloat(prevW) ? "-" : "↑";
-                } else if (weight) {
-                    fillColor = "bg-[#d1f2eb]"; // 預設馬卡龍綠
-                }
-
+                } else if (weight) { fillColor = "bg-[#d1f2eb]"; }
                 slider.innerHTML += `
                     <div onclick="setDate('${dateStr}')" class="capsule-container">
                         <div class="text-[10px] text-gray-400 mb-1.5 font-bold">${weight}</div>
-                        <div class="capsule-bg ${isActive}">
-                            <div class="capsule-fill ${fillColor} flex items-center justify-center text-[10px] font-bold text-white" style="height: ${weight ? '65%' : '0%'}">
-                                ${symbol}
-                            </div>
-                        </div>
+                        <div class="capsule-bg ${isActive}"><div class="capsule-fill ${fillColor} flex items-center justify-center text-[10px] font-bold text-white" style="height: ${weight ? '65%' : '0%'}">${symbol}</div></div>
                         <div class="text-sm mt-2.5 font-black ${dateStr === selectedDate ? 'text-orange-500' : 'text-gray-400'}">${d.getDate()}</div>
                     </div>`;
             }
         }
 
         function saveData() {
-            db[selectedDate] = {
-                w: document.getElementById('i-w').value,
-                p: document.getElementById('i-p').value || 0,
-                c: document.getElementById('i-c').value || 0,
-                content: document.getElementById('i-content').value
-            };
-            localStorage.setItem('health_macaron_full_db', JSON.stringify(db));
+            db[selectedDate] = { w: document.getElementById('i-w').value, p: document.getElementById('i-p').value || 0, c: document.getElementById('i-c').value || 0, content: document.getElementById('i-content').value };
+            localStorage.setItem('health_master_v2', JSON.stringify(db));
             updateUI();
             alert('✨ 儲存成功 ✨');
+        }
+
+        function deleteData() {
+            if(confirm('確定要刪除這天的紀錄嗎？此動作無法復原。')) {
+                delete db[selectedDate];
+                localStorage.setItem('health_master_v2', JSON.stringify(db));
+                updateUI();
+            }
         }
 
         function toggleHistory() {
@@ -224,23 +201,34 @@
             tbody.innerHTML = '';
             const dates = Object.keys(db).sort().reverse();
             dates.forEach(date => {
-                const cur = db[date];
-                const prev = db[getPrevDate(date)];
+                const cur = db[date], prev = db[new Date(new Date(date).setDate(new Date(date).getDate()-1)).toISOString().split('T')[0]];
                 let diff = "--";
-                if(cur.w && prev?.w) {
-                    const res = (parseFloat(cur.w) - parseFloat(prev.w)).toFixed(1);
-                    diff = (res > 0 ? '+' : '') + res;
-                }
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="py-5 text-gray-400 text-xs font-medium">${date.substring(5)}</td>
-                        <td class="py-5 font-black text-gray-800 text-xl">${cur.w}</td>
-                        <td class="py-5 font-bold ${diff.includes('+') ? 'text-pink-300':'text-teal-400'} text-sm">${diff}</td>
-                        <td class="py-5 font-bold text-blue-500">${cur.p}/${cur.c}</td>
-                    </tr>`;
+                if(cur.w && prev?.w) { const res = (parseFloat(cur.w)-parseFloat(prev.w)).toFixed(1); diff = (res > 0 ? '+' : '') + res; }
+                tbody.innerHTML += `<tr><td class="py-5 text-gray-400 text-xs">${date.substring(5)}</td><td class="py-5 font-black text-gray-800 text-xl">${cur.w}</td><td class="py-5 font-bold ${diff.includes('+') ? 'text-pink-300':'text-teal-400'} text-sm">${diff}</td><td class="py-5 font-bold text-blue-500">${cur.p}/${cur.c}</td></tr>`;
             });
         }
-        function getPrevDate(ds) { let d=new Date(ds); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
+
+        function toggleChart() {
+            const modal = document.getElementById('chart-modal');
+            const isVisible = modal.style.display === 'flex';
+            modal.style.display = isVisible ? 'none' : 'flex';
+            if (!isVisible) renderChart();
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            const dates = Object.keys(db).sort().slice(-7); // 取最近7筆
+            const weights = dates.map(d => db[d].w);
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates.map(d => d.substring(5)),
+                    datasets: [{ label: '體重 (kg)', data: weights, borderColor: '#85c1e9', backgroundColor: 'rgba(133, 193, 233, 0.2)', fill: true, tension: 0.4, pointRadius: 5, pointBackgroundColor: '#fff', pointBorderWidth: 2 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false, grid: { display: false } }, x: { grid: { display: false } } } }
+            });
+        }
 
         updateUI();
     </script>
