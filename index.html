@@ -3,51 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>我的溫柔紀錄空間</title>
+    <title>健康紀錄表</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --mint: #d1f2eb; --blue: #d6eaf8; --text: #566573; --accent: #a3e4d7; --bg-soft: #f0f9f9; }
-        body { 
-            background: linear-gradient(135deg, var(--bg-soft) 0%, #ffffff 100%);
-            color: var(--text); 
-            font-family: "PingFang TC", sans-serif; 
-            padding-bottom: 90px;
-            min-height: 100vh;
-        }
-        .macaron-card { 
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border: 2px solid white;
-            border-radius: 2rem; 
-            box-shadow: 0 8px 20px rgba(163, 228, 215, 0.2); 
-        }
-        .date-active { background: white; border-radius: 1.2rem; color: #148f77; font-weight: bold; border: 1.5px solid var(--mint); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .btn-primary { background: linear-gradient(135deg, #a3e4d7 0%, #85c1e9 100%); color: white; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-around; padding: 12px 0; z-index: 100; border-radius: 2rem 2rem 0 0; }
-        .tab-active { color: #5dade2; font-weight: bold; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(214, 234, 248, 0.7); z-index: 200; backdrop-filter: blur(8px); }
+        :root { --mint: #d1f2eb; --orange: #fbeee0; --text: #444; }
+        body { background: #f9f9f9; color: var(--text); font-family: sans-serif; padding-bottom: 90px; }
+        
+        /* 模仿圖片中的膠囊樣式 */
+        .capsule-container { min-width: 55px; height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; }
+        .capsule-bg { width: 40px; height: 80px; background: white; border-radius: 20px; position: relative; overflow: hidden; border: 1px solid #f0f0f0; }
+        .capsule-fill { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 15px; transition: height 0.5s ease; }
+        .active-ring { border: 2.5px solid #ff9f43 !important; } /* 選中橘色圈 */
+        
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .btn-primary { background: linear-gradient(135deg, #a3e4d7 0%, #85c1e9 100%); color: white; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 15px 0; z-index: 100; box-shadow: 0 -5px 20px rgba(0,0,0,0.03); border-radius: 25px 25px 0 0; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; backdrop-filter: blur(5px); }
     </style>
 </head>
 <body>
 
-    <header class="p-4 sticky top-0 bg-white/70 backdrop-blur-md z-50">
-        <div class="flex justify-between items-center mb-4 max-w-md mx-auto">
-            <button onclick="document.getElementById('date-picker').showPicker()" class="text-teal-400 text-xl"><i class="fa-solid fa-calendar-alt"></i></button>
-            <span class="font-bold text-teal-600 tracking-widest text-lg">健康紀錄表</span>
-            <button onclick="toggleHistory()" class="text-blue-400 text-xl"><i class="fa-solid fa-table-list"></i></button>
+    <header class="p-6 bg-white sticky top-0 z-50">
+        <div class="flex justify-between items-center mb-6 max-w-md mx-auto">
+            <div onclick="document.getElementById('date-picker').showPicker()" class="cursor-pointer flex items-center group">
+                <h1 id="display-title" class="text-3xl font-black mr-2">今天</h1>
+                <i class="fa-solid fa-caret-down text-gray-400 group-hover:text-teal-500 transition-colors"></i>
+            </div>
+            <div class="flex space-x-4">
+                <button onclick="toggleHistory()" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100"><i class="fa-solid fa-list-ul"></i></button>
+                <button onclick="alert('圖表功能開發中')" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100"><i class="fa-solid fa-chart-line"></i></button>
+            </div>
         </div>
-        <div id="date-slider" class="flex overflow-x-auto space-x-2 no-scrollbar max-w-md mx-auto pb-2">
+
+        <div id="date-slider" class="flex overflow-x-auto space-x-3 no-scrollbar max-w-md mx-auto py-2">
             </div>
     </header>
 
-    <main id="tab-daily" class="max-w-md mx-auto px-4 mt-2 space-y-6">
-        <div class="macaron-card p-6 flex justify-around items-center">
+    <main id="tab-daily" class="max-w-md mx-auto px-4 mt-4 space-y-6">
+        <div class="bg-white rounded-[2.5rem] p-8 flex justify-around items-center shadow-sm border border-gray-50">
             <div class="text-center">
-                <p class="text-[11px] uppercase text-gray-400 mb-1 font-bold">Weight</p>
+                <p class="text-[11px] font-bold text-gray-300 uppercase mb-2">Weight</p>
                 <p id="v-w" class="text-3xl font-black text-teal-500">--</p>
             </div>
-            <div class="text-center">
-                <p class="text-[11px] uppercase text-gray-400 mb-1 font-bold">Protein</p>
+            <div class="text-center border-x border-gray-100 px-6">
+                <p class="text-[11px] font-bold text-gray-300 uppercase mb-2">Protein</p>
                 <p id="v-p" class="text-3xl font-black text-blue-400">0</p>
+            </div>
+            <div class="text-center">
+                <p class="text-[11px] font-bold text-gray-300 uppercase mb-2">Carb</p>
+                <p id="v-c" class="text-3xl font-black text-orange-300">0</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-[2.5rem] p-8 space-y-6 shadow-sm border border-gray-50">
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-center space-y-2">
+                    <label class="text-xs font-bold text-teal-600">體重 (kg)</label>
+                    <input id="i-w" type="number" step="0.1" class="w-full p-4 text-center bg-gray-50 rounded-2xl focus:ring-2 focus:ring-teal-200 outline-none font-black text-xl" placeholder="0.0">
+                </div>
+                <div class="text-center space-y-2">
+                    <label class="text-xs font-bold text-blue-500">蛋白 (g)</label>
+                    <input id="i-p" type="number" class="w-full p-4 text-center bg-gray-50 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-black text-xl" placeholder="0">
+                </div>
+                <div class="text-center space-y-2">
+                    <label class="text-xs font-bold text-orange-400">碳水 (g)</label>
+                    <input id="i-c" type="number" class="w-full p-4 text-center bg-gray-50 rounded-2xl focus:ring-2 focus:ring-orange-100 outline-none font-black text-xl" placeholder="0">
+                </div>
+            </div>
+            <textarea id="i-content" rows="2" class="w-full p-5 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-teal-50 outline-none text-sm italic" placeholder="寫點什麼紀錄這一天..."></textarea>
+            <button onclick="saveData()" class="btn-primary w-full py-5 rounded-[1.5rem] font-bold text-lg shadow-xl shadow-teal-100 active:scale-95 transition-all">
+                儲存進度
+            </button>
+        </div>
+    </main>
+
+    <main id="tab-inbody" class="max-w-md mx-auto px-4 mt-4 hidden">
+        <div class="bg-white rounded-[2.5rem] p-10 text-center space-y-8 shadow-sm">
+            <h2 class="text-2xl font-black text-gray-800">InBody</h2>
+            <div class="space-y-4 text-left">
+                <div class="p-4 bg-blue-50/50 rounded-2xl flex justify-between items-center">
+                    <span class="text-sm font-bold text-blue-500">骨骼肌重量 (kg)</span>
+                    <input type="number" class="bg-transparent text-right font-black w-24 outline-none text-xl" placeholder="0.0">
+                </div>
+                <div class="p-4 bg-pink-50/50 rounded-2xl flex justify-between items-center">
+                    <span class="text-sm font-bold text-pink-400">體脂肪率 (%)</span>
+                    <input type="number" class="bg-transparent text-right font-black w-24 outline-none text-xl" placeholder="0.0">
+                </div>
+            </div>
+            <button class="btn-primary w-full py-5 rounded-[1.5rem] font-bold">儲存 InBody 紀錄</button>
+        </div>
+    </main>
+
+    <div id="history-modal" class="modal items-end sm:items-center justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-[3rem] sm:rounded-[3rem] max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-8 border-b flex justify-between items-center">
+                <h3 class="font-black text-2xl text-gray-800">全月數據表</h3>
+                <button onclick="toggleHistory()" class="text-3xl text-gray-300">&times;</button>
+            </div>
+            <div class="overflow-y-auto p-4 flex-1">
+                <table class="w-full text-center">
+                    <thead class="text-[10px] text-gray-300 uppercase font-bold border-b">
+                        <tr>
+                            <th class="py-4">日期</th>
+                            <th class="py-4">體重</th>
+                            <th class="py-4">差距</th>
+                            <th class="py-4">蛋白</th>
+                            <th class="py-4">碳水</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body" class="divide-y divide-gray-50"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav max-w-md mx-auto">
+        <button onclick="switchTab('daily')" id="btn-daily" class="text-teal-500 flex flex-col items-center">
+            <i class="fa-solid fa-house-chimney text-2xl"></i>
+            <span class="text-[10px] mt-1 font-bold">紀錄</span>
+        </button>
+        <button onclick="switchTab('inbody')" id="btn-inbody" class="text-gray-300 flex flex-col items-center">
+            <i class="fa-solid fa-dna text-2xl"></i>
+            <span class="text-[10px] mt-1 font-bold">InBody</span>
+        </button>
+    </nav>
+
+    <input type="date" id="date-picker" class="hidden" onchange="setDate(this.value)">
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('health_v5_db') || '{}');
+        let selectedDate = new Date().toLocaleDateString('en-CA');
+
+        function setDate(date) { selectedDate = date; updateUI(); }
+
+        function switchTab(tab) {
+            document.getElementById('tab-daily').classList.toggle('hidden', tab !== 'daily');
+            document.getElementById('tab-inbody').classList.toggle('hidden', tab !== 'inbody');
+            document.getElementById('btn-daily').className = tab === 'daily' ? 'text-teal-500 flex flex-col items-center' : 'text-gray-300 flex flex-col items-center';
+            document.getElementById('btn-inbody').className = tab === 'inbody' ? 'text-teal-500 flex flex-col items-center' : 'text-gray-300 flex flex-col items-center';
+        }
+
+        function updateUI() {
+            const todayStr = new Date().toLocaleDateString('en-CA');
+            const titleEl = document.getElementById('display-title');
+            
+            if (selectedDate === todayStr) {
