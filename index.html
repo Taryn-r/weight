@@ -7,14 +7,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --mint: #d1f2eb; --orange: #fbeee0; --text: #444; }
-        body { background: #f9f9f9; color: var(--text); font-family: sans-serif; padding-bottom: 100px; min-height: 100vh; }
+        :root { --mint: #d1f2eb; --orange: #fbeee0; --text: #566573; }
+        body { 
+            background: #f9f9f9; 
+            color: var(--text); 
+            font-family: "PingFang TC", sans-serif; 
+            padding-bottom: 100px;
+            min-height: 100vh;
+        }
         
-        /* 膠囊樣式修復 */
+        /* 視覺膠囊核心樣式 */
         .capsule-container { min-width: 60px; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; cursor: pointer; }
-        .capsule-bg { width: 42px; height: 75px; background: white; border-radius: 22px; position: relative; overflow: hidden; border: 1.5px solid #f0f0f0; transition: all 0.3s; }
-        .capsule-fill { position: absolute; bottom: 0; left: 0; right: 0; transition: height 0.5s ease-in-out; }
-        .active-ring { border: 3px solid #ff9f43 !important; transform: scale(1.05); } 
+        .capsule-bg { width: 42px; height: 75px; background: white; border-radius: 22px; position: relative; overflow: hidden; border: 1.5px solid #f0f0f0; }
+        .capsule-fill { position: absolute; bottom: 0; left: 0; right: 0; transition: height 0.5s ease; }
+        .active-ring { border: 3px solid #ff9f43 !important; }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .btn-primary { background: linear-gradient(135deg, #a3e4d7 0%, #85c1e9 100%); color: white; }
@@ -27,19 +33,17 @@
     <header class="p-6 bg-white sticky top-0 z-50 shadow-sm">
         <div class="flex justify-between items-center mb-6 max-w-md mx-auto">
             <div onclick="document.getElementById('date-picker').showPicker()" class="cursor-pointer flex items-center group">
-                <h1 id="display-title" class="text-3xl font-black mr-2">今天</h1>
-                <i class="fa-solid fa-caret-down text-gray-400 group-hover:text-teal-500"></i>
+                <h1 id="display-title" class="text-3xl font-black mr-2 text-gray-800">今天</h1>
+                <i class="fa-solid fa-caret-down text-gray-400"></i>
             </div>
-            <div class="flex space-x-3">
-                <button onclick="toggleHistory()" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100"><i class="fa-solid fa-list-ul"></i></button>
-            </div>
+            <button onclick="toggleHistory()" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100"><i class="fa-solid fa-list-ul"></i></button>
         </div>
 
         <div id="date-slider" class="flex overflow-x-auto space-x-2 no-scrollbar max-w-md mx-auto py-2">
             </div>
     </header>
 
-    <main id="tab-daily" class="max-w-md mx-auto px-4 mt-6 space-y-6">
+    <main class="max-w-md mx-auto px-4 mt-6 space-y-6">
         <div class="bg-white rounded-[2.5rem] p-8 flex justify-around items-center shadow-sm border border-gray-50">
             <div class="text-center">
                 <p class="text-[11px] font-bold text-gray-300 uppercase mb-2">Weight</p>
@@ -72,22 +76,15 @@
             </div>
             <textarea id="i-content" rows="2" class="w-full p-5 bg-gray-50 rounded-2xl outline-none text-sm italic" placeholder="寫點什麼紀錄這一天..."></textarea>
             <button onclick="saveData()" class="btn-primary w-full py-5 rounded-[1.5rem] font-bold text-lg shadow-lg active:scale-95 transition-all">
-                儲存紀錄
+                儲存今日進度
             </button>
-        </div>
-    </main>
-
-    <main id="tab-inbody" class="max-w-md mx-auto px-4 mt-6 hidden">
-        <div class="bg-white rounded-[2.5rem] p-10 text-center shadow-sm">
-            <h2 class="text-2xl font-black mb-6">InBody</h2>
-            <p class="text-gray-400 italic">數據模組調整中...</p>
         </div>
     </main>
 
     <div id="history-modal" class="modal items-end sm:items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-[2.5rem] max-h-[85vh] overflow-hidden flex flex-col">
             <div class="p-8 border-b flex justify-between items-center bg-white sticky top-0">
-                <h3 class="font-black text-2xl text-teal-600">歷史數據</h3>
+                <h3 class="font-black text-2xl text-teal-600">數據報表</h3>
                 <button onclick="toggleHistory()" class="text-3xl text-gray-300">&times;</button>
             </div>
             <div class="overflow-y-auto p-4 flex-1">
@@ -107,11 +104,11 @@
     </div>
 
     <nav class="bottom-nav max-w-md mx-auto">
-        <button onclick="switchTab('daily')" class="text-teal-500 flex flex-col items-center">
+        <button class="text-teal-500 flex flex-col items-center">
             <i class="fa-solid fa-house-chimney text-2xl"></i>
             <span class="text-[10px] mt-1 font-bold">紀錄</span>
         </button>
-        <button onclick="switchTab('inbody')" class="text-gray-300 flex flex-col items-center opacity-50">
+        <button class="text-gray-300 flex flex-col items-center opacity-50">
             <i class="fa-solid fa-dna text-2xl"></i>
             <span class="text-[10px] mt-1 font-bold">InBody</span>
         </button>
@@ -120,26 +117,16 @@
     <input type="date" id="date-picker" class="hidden" onchange="setDate(this.value)">
 
     <script>
-        // 使用固定的日期處理函數，避免瀏覽器格式差異
-        function getTodayStr() {
-            const now = new Date();
-            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        }
-
-        let db = JSON.parse(localStorage.getItem('health_final_db') || '{}');
-        let selectedDate = getTodayStr();
+        // --- 核心邏輯：保證儲存與日期正確 ---
+        let db = JSON.parse(localStorage.getItem('health_master_db') || '{}');
+        let selectedDate = new Date().toISOString().split('T')[0];
 
         function setDate(date) { selectedDate = date; updateUI(); }
 
         function updateUI() {
-            const todayStr = getTodayStr();
+            const todayStr = new Date().toISOString().split('T')[0];
             const titleEl = document.getElementById('display-title');
-            
-            if (selectedDate === todayStr) {
-                titleEl.innerText = "今天";
-            } else {
-                titleEl.innerText = selectedDate.replace(/-/g, '/');
-            }
+            titleEl.innerText = (selectedDate === todayStr) ? "今天" : selectedDate.replace(/-/g, '/');
 
             renderDateSlider();
             const data = db[selectedDate] || { w: '', p: '', c: '', content: '' };
@@ -161,14 +148,14 @@
             for(let i = -3; i <= 3; i++) {
                 let d = new Date(selectedDate);
                 d.setDate(d.getDate() + i);
-                let dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                let dateStr = d.toISOString().split('T')[0];
                 
                 let weight = db[dateStr]?.w || '';
                 let isActive = dateStr === selectedDate ? 'active-ring' : '';
                 
-                // 顏色判斷
+                // 漲跌判斷顏色
                 let prevD = new Date(d); prevD.setDate(d.getDate() - 1);
-                let prevStr = `${prevD.getFullYear()}-${String(prevD.getMonth() + 1).padStart(2, '0')}-${String(prevD.getDate()).padStart(2, '0')}`;
+                let prevStr = prevD.toISOString().split('T')[0];
                 let prevW = db[prevStr]?.w;
                 
                 let fillColor = "bg-gray-100";
@@ -184,7 +171,7 @@
                     <div onclick="setDate('${dateStr}')" class="capsule-container">
                         <div class="text-[10px] text-gray-400 mb-1 font-bold">${weight}</div>
                         <div class="capsule-bg ${isActive}">
-                            <div class="capsule-fill ${fillColor} flex items-center justify-center text-xs font-bold text-white" style="height: ${weight ? '65%' : '0%'}">
+                            <div class="capsule-fill ${fillColor} flex items-center justify-center text-[10px] font-bold text-white" style="height: ${weight ? '65%' : '0%'}">
                                 ${symbol}
                             </div>
                         </div>
@@ -194,21 +181,15 @@
         }
 
         function saveData() {
-            const weightVal = document.getElementById('i-w').value;
             db[selectedDate] = {
-                w: weightVal,
+                w: document.getElementById('i-w').value,
                 p: document.getElementById('i-p').value || 0,
                 c: document.getElementById('i-c').value || 0,
                 content: document.getElementById('i-content').value
             };
-            localStorage.setItem('health_final_db', JSON.stringify(db));
+            localStorage.setItem('health_master_db', JSON.stringify(db));
             updateUI();
-            alert('紀錄已儲存！');
-        }
-
-        function switchTab(tab) {
-            document.getElementById('tab-daily').classList.toggle('hidden', tab !== 'daily');
-            document.getElementById('tab-inbody').classList.toggle('hidden', tab !== 'inbody');
+            alert('✨ 儲存成功 ✨');
         }
 
         function toggleHistory() {
@@ -224,17 +205,23 @@
             const dates = Object.keys(db).sort().reverse();
             dates.forEach(date => {
                 const cur = db[date];
+                const prev = db[getPrevDate(date)];
+                let diff = "--";
+                if(cur.w && prev?.w) {
+                    const res = (parseFloat(cur.w) - parseFloat(prev.w)).toFixed(1);
+                    diff = (res > 0 ? '+' : '') + res;
+                }
                 tbody.innerHTML += `
                     <tr>
-                        <td class="py-4 text-xs text-gray-400">${date.substring(5)}</td>
-                        <td class="py-4 font-black text-lg">${cur.w}</td>
-                        <td class="py-4 text-xs">--</td>
-                        <td class="py-4 font-bold text-blue-400">${cur.p}/${cur.c}</td>
+                        <td class="py-5 text-gray-400 text-xs">${date.substring(5)}</td>
+                        <td class="py-5 font-black text-lg">${cur.w}</td>
+                        <td class="py-5 font-bold ${diff.includes('+') ? 'text-pink-300':'text-teal-400'}">${diff}</td>
+                        <td class="py-5 font-bold text-blue-400">${cur.p}/${cur.c}</td>
                     </tr>`;
             });
         }
+        function getPrevDate(ds) { let d=new Date(ds); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
 
-        // 啟動程式
         updateUI();
     </script>
 </body>
