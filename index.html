@@ -19,67 +19,123 @@
         .input-bear { border: 1px solid var(--bear-mint); border-radius: 0.75rem; padding: 0.6rem; background: white; width: 100%; text-align: center; font-size: 0.9rem; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; backdrop-filter: blur(5px); justify-content: center; align-items: center; }
         .inbody-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 2px; display: block; }
+        .diff-pos { color: #f87171; font-size: 0.65rem; font-weight: bold; }
+        .diff-neg { color: #34d399; font-size: 0.65rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <header class="flex justify-between items-center p-5 max-w-md mx-auto sticky top-0 bg-[#f4f9f9]/80 backdrop-blur-sm z-10">
-        <button onclick="openSelectorModal()" id="left-btn" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-teal-400 shadow-sm"><i class="fa-solid fa-calendar-alt"></i></button>
-        <h1 id="main-title" class="text-xl font-black text-slate-800 tracking-wider">每日紀錄</h1>
+        <button onclick="openModal('manager-modal')" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-teal-400 shadow-sm"><i class="fa-solid fa-bars"></i></button>
+        <h1 id="main-title" class="text-xl font-black text-slate-800 tracking-wider">健康能量紀錄</h1>
         <button onclick="handleRightBtn()" id="right-btn" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-400 shadow-sm"><i class="fa-solid fa-list-ul"></i></button>
     </header>
 
     <main class="max-w-md mx-auto px-4 space-y-4">
         <div id="page-daily" class="tab-content active space-y-4">
             <div id="date-slider" class="flex justify-between items-center macaron-card p-4 overflow-x-auto gap-2"></div>
-            
             <div class="grid grid-cols-3 gap-3">
                 <div class="macaron-card p-4 text-center">
-                    <p class="text-[10px] uppercase text-gray-400 tracking-tighter">體重 (kg)</p>
+                    <p class="text-[10px] uppercase text-gray-400">體重 (kg)</p>
                     <p id="view-weight" class="text-2xl font-black text-teal-500">--</p>
                 </div>
                 <div class="macaron-card p-4 text-center">
-                    <p class="text-[10px] uppercase text-gray-400 tracking-tighter">蛋白質 (g)</p>
+                    <p class="text-[10px] uppercase text-gray-400">蛋白 (g)</p>
                     <p id="view-pro" class="text-2xl font-black text-blue-400">0</p>
                 </div>
                 <div class="macaron-card p-4 text-center">
-                    <p class="text-[10px] uppercase text-gray-400 tracking-tighter">碳水 (g)</p>
+                    <p class="text-[10px] uppercase text-gray-400">碳水 (g)</p>
                     <p id="view-carb" class="text-2xl font-black text-orange-300">0</p>
                 </div>
             </div>
-
             <div class="macaron-card p-5">
-                <p class="text-xs text-gray-400 mb-2 font-bold"><i class="fa-solid fa-quote-left mr-1"></i> 進食筆記</p>
-                <p id="view-content" class="text-sm text-gray-500 italic">尚未寫下任何內容...</p>
+                <p class="text-xs text-gray-400 mb-2 font-bold italic"><i class="fa-solid fa-quote-left mr-1"></i> 進食筆記</p>
+                <p id="view-content" class="text-sm text-gray-500">尚未寫下內容...</p>
             </div>
-
             <div class="macaron-card p-6 space-y-4">
                 <div class="grid grid-cols-3 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[10px] text-gray-400 ml-1">體重</label>
-                        <input id="in-weight" type="number" step="0.1" class="input-bear" placeholder="0.0">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] text-gray-400 ml-1">蛋白</label>
-                        <input id="in-pro" type="number" class="input-bear" placeholder="0">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] text-gray-400 ml-1">碳水</label>
-                        <input id="in-carb" type="number" class="input-bear" placeholder="0">
-                    </div>
+                    <input id="in-weight" type="number" step="0.1" class="input-bear" placeholder="體重">
+                    <input id="in-pro" type="number" class="input-bear" placeholder="蛋白">
+                    <input id="in-carb" type="number" class="input-bear" placeholder="碳水">
                 </div>
-                <textarea id="in-content" rows="2" class="input-bear text-left" placeholder="填寫今天的進食內容與心情..."></textarea>
-                <button onclick="saveDailyData()" class="w-full bg-gradient-to-r from-teal-200 to-blue-200 text-white py-4 rounded-2xl font-bold shadow-sm active:scale-95 transition-all">
-                    儲存健康數據
-                </button>
+                <textarea id="in-content" rows="2" class="input-bear text-left" placeholder="心情或飲食筆記..."></textarea>
+                <button onclick="saveDailyData()" class="w-full bg-gradient-to-r from-teal-200 to-blue-200 text-white py-4 rounded-2xl font-bold shadow-sm">儲存今日數據</button>
             </div>
         </div>
 
         <div id="page-inbody" class="tab-content space-y-4">
-            <div id="inbody-latest-view" class="space-y-4">
-                </div>
+            <div id="inbody-latest-view" class="space-y-4"></div>
+            <div class="px-2"><h4 class="text-xs font-bold text-gray-300 uppercase tracking-widest">歷史紀錄回顧</h4></div>
+            <div id="inbody-history-list" class="space-y-3 pb-10"></div>
         </div>
     </main>
+
+    <div id="manager-modal" class="modal" onclick="closeModal('manager-modal')">
+        <div class="bg-white w-4/5 max-w-sm rounded-[2rem] p-6 space-y-4 shadow-2xl" onclick="event.stopPropagation()">
+            <h3 class="text-center font-black text-slate-700 mb-4">功能選單</h3>
+            <button onclick="document.getElementById('date-picker').showPicker(); closeModal('manager-modal');" class="w-full p-4 bg-teal-50 text-teal-700 rounded-xl font-bold text-left flex justify-between items-center">
+                <span><i class="fa-solid fa-calendar-alt mr-2"></i> 跳轉日期</span>
+                <i class="fa-solid fa-chevron-right text-teal-200"></i>
+            </button>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="exportAllData()" class="p-4 bg-blue-50 text-blue-700 rounded-xl font-bold text-sm flex flex-col items-center gap-2">
+                    <i class="fa-solid fa-file-export text-xl"></i> 備份匯出
+                </button>
+                <button onclick="document.getElementById('import-file').click()" class="p-4 bg-orange-50 text-orange-700 rounded-xl font-bold text-sm flex flex-col items-center gap-2">
+                    <i class="fa-solid fa-file-import text-xl"></i> 資料匯入
+                </button>
+            </div>
+            <input type="file" id="import-file" class="hidden" accept=".json" onchange="importAllData(event)">
+            <p class="text-[10px] text-gray-400 text-center">匯出檔案包含「每日紀錄」與「InBody」所有資料</p>
+        </div>
+    </div>
+
+    <div id="inbody-form-modal" class="modal">
+        <div class="bg-white w-full max-w-md h-[90vh] rounded-t-[2rem] p-6 overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-xl text-blue-500">新增 InBody 報告</h3>
+                <button onclick="closeModal('inbody-form-modal')" class="text-2xl text-gray-300">&times;</button>
+            </div>
+            <div class="grid grid-cols-2 gap-4 pb-10">
+                <div class="col-span-2"><label class="inbody-label">測量日期</label><input id="f-date" type="date" class="input-bear"></div>
+                <div><label class="inbody-label">體重 (kg)</label><input id="f-weight" type="number" step="0.1" class="input-bear"></div>
+                <div><label class="inbody-label">骨骼肌 (kg)</label><input id="f-muscle" type="number" step="0.1" class="input-bear"></div>
+                <div><label class="inbody-label">體脂重 (kg)</label><input id="f-fat-kg" type="number" step="0.1" class="input-bear"></div>
+                <div><label class="inbody-label">BMI</label><input id="f-bmi" type="number" step="0.1" class="input-bear"></div>
+                <div><label class="inbody-label">體脂率 (%)</label><input id="f-fat-p" type="number" step="0.1" class="input-bear"></div>
+                <div><label class="inbody-label">腰臀比 (WHR)</label><input id="f-whr" type="number" step="0.01" class="input-bear"></div>
+                <div><label class="inbody-label">水分比 (%)</label><input id="f-moist" type="number" step="0.1" class="input-bear"></div>
+                <div><label class="inbody-label">內臟脂肪</label><input id="f-visceral" type="number" class="input-bear"></div>
+                <div><label class="inbody-label">基礎代謝 (kcal)</label><input id="f-bmr" type="number" class="input-bear"></div>
+                <div><label class="inbody-label">身體評分</label><input id="f-score" type="number" class="input-bear"></div>
+                <div class="col-span-2 mt-4"><button onclick="submitInBody()" class="w-full bg-blue-400 text-white py-4 rounded-2xl font-bold">儲存 InBody 數據</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="history-modal" class="modal items-end">
+        <div class="bg-white w-full max-w-md rounded-t-[3rem] max-h-[85vh] overflow-hidden flex flex-col">
+            <div class="p-8 border-b flex justify-between items-center bg-white sticky top-0">
+                <button onclick="openModal('type-selector-modal')" class="text-xs bg-gray-100 px-3 py-1 rounded-full text-gray-500 font-bold">切換類別</button>
+                <h3 id="history-title" class="font-bold text-teal-600">數據歷史</h3>
+                <button onclick="closeModal('history-modal')" class="text-gray-400 text-2xl w-10 h-10">&times;</button>
+            </div>
+            <div id="history-content-area" class="overflow-y-auto p-6 flex-1">
+                <table id="history-table" class="w-full text-sm">
+                    <thead id="table-head" class="text-gray-300 text-[10px] border-b"></thead>
+                    <tbody id="history-table-body" class="divide-y divide-gray-50"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="type-selector-modal" class="modal" onclick="closeModal('type-selector-modal')">
+        <div class="bg-white w-3/4 rounded-3xl p-6 space-y-3" onclick="event.stopPropagation()">
+            <button onclick="updateHistoryMode('weight')" class="w-full p-4 bg-teal-50 text-teal-700 rounded-xl font-bold">體重紀錄</button>
+            <button onclick="updateHistoryMode('pro')" class="w-full p-4 bg-blue-50 text-blue-700 rounded-xl font-bold">蛋白質紀錄</button>
+            <button onclick="updateHistoryMode('carb')" class="w-full p-4 bg-orange-50 text-orange-700 rounded-xl font-bold">碳水紀錄</button>
+        </div>
+    </div>
 
     <footer class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md rounded-t-[2rem] shadow-lg z-50">
         <div class="max-w-md mx-auto flex justify-around p-4">
@@ -88,58 +144,7 @@
         </div>
     </footer>
 
-    <div id="inbody-form-modal" class="modal">
-        <div class="bg-white w-full max-w-md h-[90vh] rounded-t-[2rem] p-6 overflow-y-auto relative">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold text-xl text-blue-500 underline decoration-teal-200 underline-offset-4">新增 InBody 報告</h3>
-                <button onclick="closeModal('inbody-form-modal')" class="text-2xl text-gray-300">&times;</button>
-            </div>
-            <div class="grid grid-cols-2 gap-4 pb-10">
-                <div class="col-span-2"><label class="inbody-label">測量日期 (如：2025/11/08)</label><input id="f-date" type="date" class="input-bear"></div>
-                <div><label class="inbody-label">體重 (kg)</label><input id="f-weight" type="number" step="0.1" class="input-bear"></div>
-                <div><label class="inbody-label">骨骼肌 (kg)</label><input id="f-muscle" type="number" step="0.1" class="input-bear"></div>
-                <div><label class="inbody-label">體脂重 (kg)</label><input id="f-fat-kg" type="number" step="0.1" class="input-bear"></div>
-                <div><label class="inbody-label">BMI</label><input id="f-bmi" type="number" step="0.1" class="input-bear"></div>
-                <div><label class="inbody-label">體脂百分比 (%)</label><input id="f-fat-p" type="number" step="0.1" class="input-bear"></div>
-                <div><label class="inbody-label">腰臀脂肪比率 (WHR)</label><input id="f-whr" type="number" step="0.01" class="input-bear"></div>
-                <div><label class="inbody-label">水分比率 (%)</label><input id="f-moist" type="number" step="0.1" class="input-bear"></div>
-                <div><label class="inbody-label">內臟脂肪等級</label><input id="f-visceral" type="number" class="input-bear"></div>
-                <div><label class="inbody-label">基礎代謝 (kcal)</label><input id="f-bmr" type="number" class="input-bear"></div>
-                <div><label class="inbody-label">身體評分 (分)</label><input id="f-score" type="number" class="input-bear"></div>
-                <div class="col-span-2 mt-4">
-                    <button onclick="submitInBody()" class="w-full bg-blue-400 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95 transition-transform">儲存完整報告數據</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="selector-modal" class="modal" onclick="closeModal('selector-modal')">
-        <div class="bg-white w-4/5 max-w-sm rounded-[2rem] p-8 space-y-4 shadow-2xl" onclick="event.stopPropagation()">
-            <h4 class="text-center font-bold text-gray-400 text-sm mb-2">切換查看類別</h4>
-            <button onclick="showHistoryMode('weight')" class="w-full p-4 bg-teal-50 text-teal-700 rounded-xl font-medium text-left">體重能量趨勢</button>
-            <button onclick="showHistoryMode('pro')" class="w-full p-4 bg-blue-50 text-blue-700 rounded-xl font-medium text-left">蛋白質攝取紀錄</button>
-            <button onclick="showHistoryMode('carb')" class="w-full p-4 bg-orange-50 text-orange-700 rounded-xl font-medium text-left">碳水化合物紀錄</button>
-        </div>
-    </div>
-
-    <div id="history-modal" class="modal items-end">
-        <div class="bg-white w-full max-w-md rounded-t-[3rem] max-h-[85vh] overflow-hidden flex flex-col">
-            <div class="p-8 border-b flex justify-between items-center bg-white sticky top-0">
-                <h3 id="history-title" class="font-bold text-xl text-teal-600">健康歷史</h3>
-                <div class="flex gap-2">
-                    <button onclick="toggleChartList()" id="btn-chart-toggle" class="text-blue-300 text-xl w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center"><i class="fa-solid fa-chart-line"></i></button>
-                    <button onclick="closeModal('history-modal')" class="text-gray-400 text-2xl w-10 h-10 flex items-center justify-center">&times;</button>
-                </div>
-            </div>
-            <div id="history-content-area" class="overflow-y-auto p-6 flex-1">
-                <div id="chart-container" class="hidden mb-6 h-64"><canvas id="historyChart"></canvas></div>
-                <table id="history-table" class="w-full text-sm">
-                    <thead id="table-head" class="text-gray-300 text-[10px] uppercase border-b"></thead>
-                    <tbody id="history-table-body" class="divide-y divide-gray-50"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    <input type="date" id="date-picker" class="hidden" onchange="changeDate(this.value)">
 
     <script>
         let dailyDb = JSON.parse(localStorage.getItem('bear_daily_db') || '{}');
@@ -147,92 +152,122 @@
         let currentViewingDate = new Date().toISOString().split('T')[0];
         let currentPage = 'daily';
         let historyMode = 'weight';
-        let historyView = 'list';
-        let myChart = null;
 
-        function init() {
-            renderDateSlider();
-            updateDailyUI();
+        function init() { renderDateSlider(); updateDailyUI(); }
+
+        // --- 備份與匯入邏輯 (核心更新) ---
+        function exportAllData() {
+            const backupData = {
+                daily: dailyDb,
+                inbody: inbodyDb,
+                exportDate: new Date().toLocaleString()
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `健康能量紀錄回報_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
         }
 
+        function importAllData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (confirm(`確定要匯入 ${imported.exportDate} 的備份資料嗎？這將覆蓋目前所有紀錄。`)) {
+                        dailyDb = imported.daily || {};
+                        inbodyDb = imported.inbody || [];
+                        localStorage.setItem('bear_daily_db', JSON.stringify(dailyDb));
+                        localStorage.setItem('bear_inbody_db', JSON.stringify(inbodyDb));
+                        alert('匯入成功！網頁將重新整理。');
+                        location.reload();
+                    }
+                } catch (err) {
+                    alert('檔案格式錯誤，請確保匯入的是正確的備份檔。');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- 原有邏輯 ---
         function switchPage(page) {
             currentPage = page;
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`page-${page}`).classList.add('active');
             document.getElementById(`nav-${page}`).classList.add('active');
-            
-            const rightBtn = document.getElementById('right-btn');
-            const mainTitle = document.getElementById('main-title');
-
-            if (page === 'inbody') {
-                mainTitle.innerText = "InBody 數據庫";
-                rightBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
-                renderInBodyLatest();
-            } else {
-                mainTitle.innerText = "健康能量紀錄";
-                rightBtn.innerHTML = '<i class="fa-solid fa-list-ul"></i>';
-                updateDailyUI();
-            }
+            document.getElementById('main-title').innerText = page === 'inbody' ? "InBody 數據庫" : "健康能量紀錄";
+            document.getElementById('right-btn').innerHTML = page === 'inbody' ? '<i class="fa-solid fa-plus"></i>' : '<i class="fa-solid fa-list-ul"></i>';
+            if (page === 'inbody') renderInBodyPage();
         }
 
-        function handleRightBtn() {
-            if (currentPage === 'inbody') openModal('inbody-form-modal');
-            else openHistoryModal();
-        }
+        function handleRightBtn() { if (currentPage === 'inbody') openModal('inbody-form-modal'); else openModal('history-modal'); renderHistoryTable(); }
 
         function submitInBody() {
             const data = {
                 date: document.getElementById('f-date').value,
-                weight: document.getElementById('f-weight').value,
-                muscle: document.getElementById('f-muscle').value,
-                fatKg: document.getElementById('f-fat-kg').value,
-                bmi: document.getElementById('f-bmi').value,
-                fatP: document.getElementById('f-fat-p').value,
-                whr: document.getElementById('f-whr').value,
-                moist: document.getElementById('f-moist').value,
-                visceral: document.getElementById('f-visceral').value,
-                bmr: document.getElementById('f-bmr').value,
-                score: document.getElementById('f-score').value
+                weight: parseFloat(document.getElementById('f-weight').value) || 0,
+                muscle: parseFloat(document.getElementById('f-muscle').value) || 0,
+                fatKg: parseFloat(document.getElementById('f-fat-kg').value) || 0,
+                bmi: parseFloat(document.getElementById('f-bmi').value) || 0,
+                fatP: parseFloat(document.getElementById('f-fat-p').value) || 0,
+                whr: parseFloat(document.getElementById('f-whr').value) || 0,
+                moist: parseFloat(document.getElementById('f-moist').value) || 0,
+                visceral: parseInt(document.getElementById('f-visceral').value) || 0,
+                bmr: parseInt(document.getElementById('f-bmr').value) || 0,
+                score: parseInt(document.getElementById('f-score').value) || 0
             };
-            if(!data.date) return alert('請填寫測量日期');
+            if(!data.date) return alert('請填寫日期');
             inbodyDb.unshift(data);
             inbodyDb.sort((a,b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem('bear_inbody_db', JSON.stringify(inbodyDb));
             closeModal('inbody-form-modal');
-            renderInBodyLatest();
+            renderInBodyPage();
         }
 
-        function renderInBodyLatest() {
-            const view = document.getElementById('inbody-latest-view');
+        function getDiff(val, prevVal, isGoodDown = true) {
+            if (prevVal === undefined || prevVal === null) return "";
+            const diff = (val - prevVal).toFixed(1);
+            if (diff == 0) return `<span class="text-[10px] text-gray-300 ml-1">(±0)</span>`;
+            const isPositive = diff > 0;
+            const colorClass = (isPositive !== isGoodDown) ? 'diff-pos' : 'diff-neg';
+            return `<span class="${colorClass} ml-1">(${isPositive ? '+' : ''}${diff})</span>`;
+        }
+
+        function renderInBodyPage() {
+            const latestArea = document.getElementById('inbody-latest-view');
+            const historyList = document.getElementById('inbody-history-list');
             if (inbodyDb.length === 0) {
-                view.innerHTML = '<div class="macaron-card p-10 text-center text-gray-400">尚未記錄 InBody 報告。<br>點擊右上角「+」開始記錄。</div>';
+                latestArea.innerHTML = '<div class="macaron-card p-10 text-center text-gray-400">尚無 InBody 資料</div>';
                 return;
             }
             const latest = inbodyDb[0];
-            view.innerHTML = `
-                <div class="macaron-card p-6 space-y-4 border-t-8 border-t-blue-200">
-                    <div class="flex justify-between items-center border-b pb-3">
-                        <span class="font-black text-slate-700 text-lg">${latest.date} 測量報告</span>
-                        <span class="bg-blue-50 text-blue-400 px-3 py-1 rounded-full text-xs font-bold">評分: ${latest.score}分</span>
+            const prev = inbodyDb[1];
+            latestArea.innerHTML = `
+                <div class="macaron-card p-6 border-t-8 border-t-blue-200">
+                    <div class="flex justify-between items-center border-b pb-3 mb-4">
+                        <span class="font-black text-slate-700">${latest.date} 報告</span>
+                        <span class="bg-blue-50 text-blue-500 px-3 py-1 rounded-full text-xs font-bold">評分 ${latest.score}${getDiff(latest.score, prev?.score, false)}</span>
                     </div>
                     <div class="grid grid-cols-2 gap-y-4 text-center">
-                        <div><p class="inbody-label">體重</p><p class="font-bold text-gray-700">${latest.weight} kg</p></div>
-                        <div><p class="inbody-label">骨骼肌</p><p class="font-bold text-indigo-500">${latest.muscle} kg</p></div>
-                        <div><p class="inbody-label">體脂重</p><p class="font-bold text-red-400">${latest.fatKg} kg</p></div>
-                        <div><p class="inbody-label">體脂百分比</p><p class="font-bold text-red-500">${latest.fatP} %</p></div>
-                        <div><p class="inbody-label">BMI</p><p class="font-bold text-gray-600">${latest.bmi}</p></div>
-                        <div><p class="inbody-label">腰臀比 (WHR)</p><p class="font-bold text-orange-400">${latest.whr}</p></div>
-                        <div><p class="inbody-label">水分比</p><p class="font-bold text-blue-400">${latest.moist} %</p></div>
-                        <div><p class="inbody-label">內臟脂肪</p><p class="font-bold text-orange-600">${latest.visceral}</p></div>
-                        <div class="col-span-2 bg-gray-50 p-3 rounded-xl">
+                        <div><p class="inbody-label">體重</p><p class="text-sm font-bold">${latest.weight}k${getDiff(latest.weight, prev?.weight)}</p></div>
+                        <div><p class="inbody-label">骨骼肌</p><p class="text-sm font-bold">${latest.muscle}k${getDiff(latest.muscle, prev?.muscle, false)}</p></div>
+                        <div><p class="inbody-label">體脂率</p><p class="text-sm font-bold">${latest.fatP}%${getDiff(latest.fatP, prev?.fatP)}</p></div>
+                        <div><p class="inbody-label">內臟脂肪</p><p class="text-sm font-bold">${latest.visceral}${getDiff(latest.visceral, prev?.visceral)}</p></div>
+                        <div class="col-span-2 bg-gray-50 p-2 rounded-lg mt-2">
                             <p class="inbody-label">基礎代謝率 (BMR)</p>
-                            <p class="font-black text-slate-700 text-lg">${latest.bmr} kcal</p>
+                            <p class="font-black text-lg text-slate-600">${latest.bmr} kcal ${getDiff(latest.bmr, prev?.bmr, false)}</p>
                         </div>
                     </div>
-                </div>
-                <p class="text-[10px] text-gray-300 text-center uppercase tracking-widest">--- 最近測量資料如上 ---</p>
-            `;
+                </div>`;
+            historyList.innerHTML = inbodyDb.slice(1).map(item => `
+                <div class="macaron-card p-4 flex justify-between items-center opacity-70">
+                    <div><p class="text-xs font-bold text-gray-500">${item.date}</p><p class="text-[10px] text-gray-400">體重 ${item.weight} / 體脂 ${item.fatP}%</p></div>
+                </div>`).join('');
         }
 
         function renderDateSlider() {
@@ -243,32 +278,24 @@
                 const ds = d.toISOString().split('T')[0];
                 const active = (ds === currentViewingDate) ? 'active' : '';
                 const data = dailyDb[ds] || {};
-                slider.innerHTML += `
-                    <button onclick="changeDate('${ds}')" class="flex-shrink-0 text-center opacity-40 transition-all ${active?'!opacity-100 scale-110 font-black text-teal-500':''}">
-                        <p class="text-[10px] font-medium">${(i===0)?"今天":d.getMonth()+1+'/'+d.getDate()}</p>
-                        <p class="text-xs">${data.weight ? data.weight+'k' : '--'}</p>
-                    </button>
-                `;
+                slider.innerHTML += `<button onclick="changeDate('${ds}')" class="flex-shrink-0 text-center opacity-40 transition-all ${active?'!opacity-100 scale-110 font-black text-teal-500':''}">
+                    <p class="text-[10px]">${(i===0)?"今天":d.getMonth()+1+'/'+d.getDate()}</p>
+                    <p class="text-xs">${data.weight ? data.weight+'k' : '--'}</p></button>`;
             }
         }
         function changeDate(d) { currentViewingDate = d; renderDateSlider(); updateDailyUI(); }
         function saveDailyData() {
-            dailyDb[currentViewingDate] = {
-                weight: document.getElementById('in-weight').value,
-                pro: document.getElementById('in-pro').value || 0,
-                carb: document.getElementById('in-carb').value || 0,
-                content: document.getElementById('in-content').value
-            };
+            dailyDb[currentViewingDate] = { weight: document.getElementById('in-weight').value, pro: document.getElementById('in-pro').value || 0, carb: document.getElementById('in-carb').value || 0, content: document.getElementById('in-content').value };
             localStorage.setItem('bear_daily_db', JSON.stringify(dailyDb));
-            renderDateSlider(); updateDailyUI(); alert('✅ 能量數據已儲存');
+            renderDateSlider(); updateDailyUI(); alert('已儲存！✨');
         }
         function updateDailyUI() {
             const data = dailyDb[currentViewingDate] || { weight: '--', pro: 0, carb: 0, content: '' };
             document.getElementById('view-weight').innerText = data.weight || '--';
             document.getElementById('view-pro').innerText = data.pro || 0;
             document.getElementById('view-carb').innerText = data.carb || 0;
-            document.getElementById('view-content').innerText = data.content || '今天還沒寫下心情與進食紀錄喔...';
-            document.getElementById('in-weight').value = (data.weight !== '--') ? data.weight : '';
+            document.getElementById('view-content').innerText = data.content || '今天還沒寫內容喔...';
+            document.getElementById('in-weight').value = data.weight !== '--' ? data.weight : '';
             document.getElementById('in-pro').value = data.pro || '';
             document.getElementById('in-carb').value = data.carb || '';
             document.getElementById('in-content').value = data.content || '';
@@ -276,54 +303,26 @@
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function openSelectorModal() { openModal('selector-modal'); }
-        function openHistoryModal() { openModal('history-modal'); renderHistoryTable(); }
-        function showHistoryMode(m) { historyMode = m; closeModal('selector-modal'); openHistoryModal(); }
-        
-        function toggleChartList() {
-            historyView = (historyView === 'list') ? 'chart' : 'list';
-            document.getElementById('history-table').classList.toggle('hidden', historyView === 'chart');
-            document.getElementById('chart-container').classList.toggle('hidden', historyView === 'list');
-            if (historyView === 'chart') renderChart(); else renderHistoryTable();
-        }
+        function updateHistoryMode(m) { historyMode = m; closeModal('type-selector-modal'); renderHistoryTable(); }
 
         function renderHistoryTable() {
             const thead = document.getElementById('table-head');
             const tbody = document.getElementById('history-table-body');
             tbody.innerHTML = '';
             const dates = Object.keys(dailyDb).sort().reverse();
+            document.getElementById('history-title').innerText = historyMode==='weight'?'體重歷史':(historyMode==='pro'?'蛋白紀錄':'碳水紀錄');
             if (historyMode === 'weight') {
-                thead.innerHTML = `<tr><th class="py-4">日期</th><th>體重 (差距)</th><th class="text-right">P / C</th></tr>`;
+                thead.innerHTML = `<tr><th class="py-4">日期</th><th>體重 (差)</th><th class="text-right">P / C</th></tr>`;
                 dates.forEach(d => {
                     const cur = dailyDb[d]; const prev = dailyDb[getPrevDate(d)];
-                    let diff = "";
-                    if(cur.weight && prev && prev.weight) {
-                        const val = (cur.weight - prev.weight).toFixed(1);
-                        diff = `<span class="text-[10px] ${val>0?'text-red-300':'text-teal-300'} ml-1">(${val>0?'+':''}${val})</span>`;
-                    }
-                    tbody.innerHTML += `<tr><td class="py-5 text-gray-400">${d.substring(5)}</td><td><span class="font-bold">${cur.weight||'--'}</span>${diff}</td><td class="text-right text-[10px] font-bold">${cur.pro} / ${cur.carb}</td></tr>`;
+                    let diff = ""; if(cur.weight && prev && prev.weight) { const val = (cur.weight - prev.weight).toFixed(1); diff = `<span class="text-[10px] ${val>0?'text-red-300':'text-teal-300'} ml-1">(${val>0?'+':''}${val})</span>`; }
+                    tbody.innerHTML += `<tr><td class="py-5 text-gray-400">${d.substring(5)}</td><td><span class="font-bold">${cur.weight||'--'}</span>${diff}</td><td class="text-right">${cur.pro}/${cur.carb}</td></tr>`;
                 });
             } else {
-                thead.innerHTML = `<tr><th class="py-4">日期</th><th>${historyMode==='pro'?'蛋白質':'碳水'}(g)</th><th class="text-right">當時體重</th></tr>`;
-                dates.forEach(d => {
-                    const cur = dailyDb[d];
-                    tbody.innerHTML += `<tr><td class="py-5 text-gray-400">${d.substring(5)}</td><td class="font-bold ${historyMode==='pro'?'text-blue-400':'text-orange-300'}">${cur[historyMode]}g</td><td class="text-right">${cur.weight||'--'}k</td></tr>`;
-                });
+                thead.innerHTML = `<tr><th class="py-4">日期</th><th>數值(g)</th><th class="text-right">體重</th></tr>`;
+                dates.forEach(d => { const cur = dailyDb[d]; tbody.innerHTML += `<tr><td class="py-5 text-gray-400">${d.substring(5)}</td><td class="font-bold ${historyMode==='pro'?'text-blue-400':'text-orange-300'}">${cur[historyMode]}</td><td class="text-right">${cur.weight||'--'}k</td></tr>`; });
             }
         }
-
-        function renderChart() {
-            const ctx = document.getElementById('historyChart').getContext('2d');
-            const dates = Object.keys(dailyDb).sort();
-            const labels = dates.map(d => d.substring(5));
-            let dataArr = [], label = '', color = '';
-            if (historyMode === 'weight') { dataArr = dates.map(d => dailyDb[d].weight); label='體重'; color='#a3e4d7'; }
-            else if (historyMode === 'pro') { dataArr = dates.map(d => dailyDb[d].pro); label='蛋白'; color='#aed6f1'; }
-            else { dataArr = dates.map(d => dailyDb[d].carb); label='碳水'; color='#f8c471'; }
-            if (myChart) myChart.destroy();
-            myChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label, data: dataArr, borderColor: color, fill: false, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
-        }
-
         function getPrevDate(ds) { const d = new Date(ds); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
 
         init();
