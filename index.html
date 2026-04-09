@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的溫柔紀錄空間</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 馬卡龍配色方案 */
+        :root {
+            --bg-soft: #f0f9f9;
+            --mint-green: #d1f2eb;
+            --soft-blue: #d6eaf8;
+            --accent-green: #a3e4d7;
+            --text-main: #566573;
+        }
+        body { 
+            background: linear-gradient(135deg, var(--bg-soft) 0%, #ffffff 100%);
+            color: var(--text-main);
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            min-height: 100vh;
+        }
+        .macaron-card { 
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid white;
+            border-radius: 2rem; 
+            box-shadow: 0 8px 20px rgba(163, 228, 215, 0.2); 
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #a3e4d7 0%, #85c1e9 100%);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:active { transform: scale(0.95); opacity: 0.9; }
+        .input-box {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1.5px solid var(--mint-green);
+            border-radius: 1rem;
+            transition: all 0.3s;
+        }
+        .input-box:focus { background: white; border-color: #85c1e9; outline: none; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(214, 234, 248, 0.6); z-index: 50; backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="p-4">
+
+    <nav class="flex justify-between items-center max-w-md mx-auto mb-6 px-2">
+        <button onclick="openDatePicker()" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-teal-400 shadow-sm"><i class="fa-solid fa-calendar"></i></button>
+        <span id="display-date" class="font-bold text-lg tracking-wider text-teal-600">今天</span>
+        <button onclick="toggleHistory()" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-400 shadow-sm"><i class="fa-solid fa-chart-line"></i></button>
+    </nav>
+
+    <main class="max-w-md mx-auto space-y-6">
+        <div class="macaron-card p-6 flex justify-around items-center">
+            <div class="text-center">
+                <p class="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Weight</p>
+                <p id="view-weight" class="text-2xl font-black text-teal-500">--</p>
+            </div>
+            <div class="h-8 w-[1px] bg-gray-100"></div>
+            <div class="text-center">
+                <p class="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Protein</p>
+                <p id="view-pro" class="text-2xl font-black text-blue-400">0</p>
+            </div>
+            <div class="h-8 w-[1px] bg-gray-100"></div>
+            <div class="text-center">
+                <p class="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Carb</p>
+                <p id="view-carb" class="text-2xl font-black text-orange-300">0</p>
+            </div>
+        </div>
+
+        <div class="macaron-card p-6 space-y-4">
+            <div class="grid grid-cols-3 gap-3">
+                <div class="space-y-1">
+                    <label class="text-xs ml-1 text-teal-600">體重 (kg)</label>
+                    <input id="in-weight" type="number" step="0.1" class="input-box w-full p-3 text-center text-gray-600" placeholder="0.0">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs ml-1 text-blue-500">蛋白質 (g)</label>
+                    <input id="in-pro" type="number" class="input-box w-full p-3 text-center text-gray-600" placeholder="0">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs ml-1 text-orange-400">碳水 (g)</label>
+                    <input id="in-carb" type="number" class="input-box w-full p-3 text-center text-gray-600" placeholder="0">
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs ml-1 text-gray-400">紀錄進食內容</label>
+                <textarea id="in-content" rows="3" class="input-box w-full p-4 text-sm text-gray-600" placeholder="今天吃了什麼好吃的？"></textarea>
+            </div>
+            <button onclick="saveData()" class="btn-primary w-full py-4 rounded-2xl font-bold tracking-widest shadow-md">
+                儲存今日美好紀錄
+            </button>
+        </div>
+
+        <div class="px-6">
+            <p class="text-xs text-gray-400 mb-2 font-bold"><i class="fa-solid fa-quote-left mr-1"></i> 進食筆記</p>
+            <p id="view-content" class="text-sm text-gray-500 leading-relaxed italic">尚未寫下任何內容...</p>
+        </div>
+    </main>
+
+    <div id="history-modal" class="modal items-end sm:items-center justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-[3rem] sm:rounded-[3rem] max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+            <div class="p-8 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white/80 backdrop-blur-md">
+                <h3 class="font-bold text-xl text-teal-600">數據月報表</h3>
+                <button onclick="toggleHistory()" class="w-8 h-8 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center">&times;</button>
+            </div>
+            <div class="overflow-y-auto p-6 flex-1">
+                <table class="w-full text-sm">
+                    <thead class="text-gray-300 text-[10px] uppercase tracking-widest">
+                        <tr>
+                            <th class="pb-4 font-normal">Date</th>
+                            <th class="pb-4 font-normal">Weight (Diff)</th>
+                            <th class="pb-4 font-normal text-right">P / C</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body" class="divide-y divide-gray-50">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <input type="date" id="date-picker" class="hidden" onchange="changeDate(this.value)">
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('weight_db_macaron') || '{}');
+        let currentViewingDate = new Date().toISOString().split('T')[0];
+
+        updateUI();
+
+        function openDatePicker() { document.getElementById('date-picker').showPicker(); }
+        function changeDate(val) { currentViewingDate = val; updateUI(); }
+        function toggleHistory() {
+            const modal = document.getElementById('history-modal');
+            const isVisible = modal.style.display === 'flex';
+            modal.style.display = isVisible ? 'none' : 'flex';
+            if (!isVisible) renderHistoryTable();
+        }
+
+        function saveData() {
+            db[currentViewingDate] = {
+                weight: document.getElementById('in-weight').value,
+                pro: document.getElementById('in-pro').value || 0,
+                carb: document.getElementById('in-carb').value || 0,
+                content: document.getElementById('in-content').value
+            };
+            localStorage.setItem('weight_db_macaron', JSON.stringify(db));
+            updateUI();
+            alert('✨ 紀錄成功 ✨');
+        }
+
+        function updateUI() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('display-date').innerText = (currentViewingDate === todayStr) ? "今天" : currentViewingDate;
+            const data = db[currentViewingDate] || { weight: '--', pro: 0, carb: 0, content: '' };
+            document.getElementById('view-weight').innerText = data.weight || '--';
+            document.getElementById('view-pro').innerText = data.pro || 0;
+            document.getElementById('view-carb').innerText = data.carb || 0;
+            document.getElementById('view-content').innerText = data.content || '這一天還沒有留下筆記喔...';
+            document.getElementById('in-weight').value = data.weight !== '--' ? data.weight : '';
+            document.getElementById('in-pro').value = data.pro || '';
+            document.getElementById('in-carb').value = data.carb || '';
+            document.getElementById('in-content').value = data.content || '';
+        }
+
+        function renderHistoryTable() {
+            const tbody = document.getElementById('history-table-body');
+            tbody.innerHTML = '';
+            const sortedDates = Object.keys(db).sort().reverse();
+            sortedDates.forEach((date) => {
+                const current = db[date];
+                const prev = db[getPrevDate(date)];
+                let diffText = "";
+                if (current.weight && prev && prev.weight) {
+                    const diff = (parseFloat(current.weight) - parseFloat(prev.weight)).toFixed(1);
+                    const color = diff > 0 ? 'text-red-300' : 'text-teal-300';
+                    diffText = `<span class="${color} text-[10px] ml-1">(${diff > 0 ? '+' : ''}${diff})</span>`;
+                }
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="py-5 text-gray-400 font-medium">${date.substring(5)}</td>
+                        <td class="py-5"><span class="font-bold text-gray-600">${current.weight || '--'}</span>${diffText}</td>
+                        <td class="py-5 text-right font-semibold text-gray-500">${current.pro} <span class="text-gray-200 mx-1">/</span> ${current.carb}</td>
+                    </tr>
+                `;
+            });
+        }
+        function getPrevDate(dateStr) {
+            const d = new Date(dateStr); d.setDate(d.getDate() - 1);
+            return d.toISOString().split('T')[0];
+        }
+    </script>
+</body>
+</html>
