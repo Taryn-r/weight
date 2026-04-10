@@ -11,6 +11,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --bear-mint: #a3e4d7; --bear-soft-bg: #f4f9f9; --text-dark: #566573; }
+        
+        /* 允許下拉整理行為 */
+        html, body { 
+            overscroll-behavior-y: auto; 
+            height: 100%;
+        }
+
         body { 
             background-color: var(--bear-soft-bg); 
             color: var(--text-dark); 
@@ -18,6 +25,7 @@
             padding-bottom: 100px; 
             padding-top: env(safe-area-inset-top);
         }
+
         .macaron-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 1.5rem; border: 1px solid white; box-shadow: 0 8px 20px rgba(163, 228, 215, 0.1); }
         .nav-item.active { color: #a3e4d7; }
         .nav-item { color: #aab7b7; transition: all 0.3s; }
@@ -26,14 +34,15 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .input-bear { border: 1px solid var(--bear-mint); border-radius: 0.75rem; padding: 0.6rem; background: white; width: 100%; text-align: center; font-size: 0.9rem; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; backdrop-filter: blur(5px); justify-content: center; align-items: center; }
-        .diff-pos { color: #f87171; font-size: 0.65rem; font-weight: bold; }
-        .diff-neg { color: #34d399; font-size: 0.65rem; font-weight: bold; }
+        .diff-pos { color: #f87171; font-weight: normal; }
+        .diff-neg { color: #34d399; font-weight: normal; }
         .inbody-label { font-size: 10px; color: #94a3b8; margin-bottom: 2px; display: block; font-weight: bold; }
         ::-webkit-scrollbar { display: none; }
         
-        /* 自定義勾選框樣式 */
-        .checkbox-container { display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
-        .checkbox-input { width: 18px; height: 18px; accent-color: #a3e4d7; }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .history-table th { color: #94a3b8; font-weight: bold; padding: 10px 5px; border-bottom: 1px solid #f1f5f9; text-align: center; }
+        .history-table td { padding: 12px 5px; text-align: center; border-bottom: 1px solid #f8fafc; }
+        .blue-dot { color: #60a5fa; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -52,8 +61,9 @@
                 <div class="macaron-card p-4"><p class="text-[10px] text-gray-400">蛋白 (g)</p><p id="view-pro" class="text-2xl font-black text-blue-400">0</p></div>
                 <div class="macaron-card p-4"><p class="text-[10px] text-gray-400">碳水 (g)</p><p id="view-carb" class="text-2xl font-black text-orange-300">0</p></div>
             </div>
+            
             <div class="macaron-card p-5">
-                <div id="view-poop" class="mb-2 hidden"><span class="bg-amber-100 text-amber-700 text-[10px] px-2 py-1 rounded-full font-bold">🚽 今日已排便</span></div>
+                <div id="view-poop" class="mb-2 hidden"><span class="bg-blue-50 text-blue-500 text-[10px] px-2 py-1 rounded-full font-bold">🔵 今日已上廁所</span></div>
                 <p id="view-content" class="text-sm text-gray-500 italic">尚未寫下內容...</p>
             </div>
 
@@ -64,9 +74,9 @@
                     <input id="in-carb" type="number" class="input-bear" placeholder="碳水">
                 </div>
                 <div class="flex items-center justify-between px-2">
-                    <label class="checkbox-container text-sm font-bold text-slate-500">
-                        <input type="checkbox" id="in-poop" class="checkbox-input">
-                        🚽 今日有排便嗎？
+                    <label class="flex items-center gap-2 text-sm font-bold text-slate-500 cursor-pointer">
+                        <input type="checkbox" id="in-poop" class="w-5 h-5 accent-teal-300">
+                        🚽 今日有上廁所嗎？
                     </label>
                 </div>
                 <textarea id="in-content" rows="2" class="input-bear text-left" placeholder="記錄今日飲食..."></textarea>
@@ -145,14 +155,26 @@
                 <h3 class="font-bold text-teal-600">數據歷史紀錄</h3>
                 <button onclick="closeModal('history-modal')" class="text-gray-300 text-2xl">&times;</button>
             </div>
-            <div class="overflow-y-auto p-6 flex-1"><table class="w-full text-sm"><tbody id="history-table-body" class="divide-y divide-gray-50"></tbody></table></div>
+            <div class="overflow-y-auto p-4 flex-1">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th width="22%">日期</th>
+                            <th width="22%">體重(差)</th>
+                            <th width="18%">蛋白</th>
+                            <th width="18%">碳水</th>
+                            <th width="10%">上廁所</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <input type="date" id="date-picker" class="hidden" onchange="changeDate(this.value)">
 
     <script>
-        // 修正本地日期
         function getLocalDateString(dateObj = new Date()) {
             const offset = dateObj.getTimezoneOffset() * 60000;
             return (new Date(dateObj - offset)).toISOString().split('T')[0];
@@ -257,7 +279,7 @@
                 pro: document.getElementById('in-pro').value||0, 
                 carb: document.getElementById('in-carb').value||0, 
                 content: document.getElementById('in-content').value,
-                poop: document.getElementById('in-poop').checked // 儲存排便狀態
+                poop: document.getElementById('in-poop').checked
             };
             localStorage.setItem('bear_daily_db', JSON.stringify(dailyDb));
             renderDateSlider(); updateDailyUI(); alert('紀錄成功 ✨');
@@ -272,8 +294,7 @@
                 const ds = getLocalDateString(d);
                 const active = (ds === currentViewingDate) ? '!opacity-100 scale-110 font-black text-teal-500' : '';
                 const hasData = dailyDb[ds] ? dailyDb[ds].weight : '--';
-                // 如果有排便，在日期下方顯示一個小點
-                const poopDot = (dailyDb[ds] && dailyDb[ds].poop) ? '<span class="text-[8px]">💩</span>' : '';
+                const poopDot = (dailyDb[ds] && dailyDb[ds].poop) ? '<span class="text-[8px] text-blue-400">●</span>' : '';
                 slider.innerHTML += `<button onclick="changeDate('${ds}')" class="flex-shrink-0 text-center opacity-40 transition-all ${active}"><p class="text-[10px]">${i===0?'今':d.getDate()}</p><p class="text-xs">${hasData}k</p>${poopDot}</button>`;
             }
         }
@@ -284,11 +305,8 @@
             document.getElementById('view-pro').innerText = d.pro || 0;
             document.getElementById('view-carb').innerText = d.carb || 0;
             document.getElementById('view-content').innerText = d.content || '點擊下方輸入紀錄...';
-            
-            // 更新顯示排便狀態
             const poopView = document.getElementById('view-poop');
             if (d.poop) { poopView.classList.remove('hidden'); } else { poopView.classList.add('hidden'); }
-
             document.getElementById('in-weight').value = d.weight;
             document.getElementById('in-pro').value = d.pro || '';
             document.getElementById('in-carb').value = d.carb || '';
@@ -297,17 +315,40 @@
         }
 
         function handleHistoryBtn() { openModal('history-modal'); renderHistoryTable(); }
+        
         function renderHistoryTable() {
             const tbody = document.getElementById('history-table-body'); tbody.innerHTML = '';
             const dates = Object.keys(dailyDb).sort().reverse();
-            dates.forEach(d => {
+            
+            dates.forEach((d) => {
                 const cur = dailyDb[d];
-                const poopIcon = cur.poop ? '💩' : '';
-                tbody.innerHTML += `<tr onclick="changeDate('${d}');closeModal('history-modal')"><td class="py-4 text-gray-400 font-medium">${d} ${poopIcon}</td><td class="font-bold text-teal-500">${cur.weight||'--'}kg</td><td class="text-right text-[10px] opacity-40 font-bold">P:${cur.pro} C:${cur.carb}</td></tr>`;
+                let diffText = "";
+                const sortedDates = Object.keys(dailyDb).sort(); 
+                const curIdx = sortedDates.indexOf(d);
+                if (curIdx > 0) {
+                    const prevDate = sortedDates[curIdx - 1];
+                    const prevWeight = parseFloat(dailyDb[prevDate].weight);
+                    const curWeight = parseFloat(cur.weight);
+                    if (!isNaN(prevWeight) && !isNaN(curWeight)) {
+                        const diff = (curWeight - prevWeight).toFixed(1);
+                        const diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : '');
+                        diffText = `<br><span class="${diffClass} text-[10px]">(${diff > 0 ? '+' : ''}${diff})</span>`;
+                    }
+                }
+
+                const poopMark = cur.poop ? '<span class="blue-dot">🔵</span>' : '';
+                
+                tbody.innerHTML += `
+                    <tr onclick="changeDate('${d}');closeModal('history-modal')">
+                        <td class="text-gray-400 font-medium">${d.split('-').slice(1).join('/')}</td>
+                        <td class="font-bold text-slate-600">${cur.weight || '--'}${diffText}</td>
+                        <td class="text-blue-400">${cur.pro || 0}g</td>
+                        <td class="text-orange-300">${cur.carb || 0}g</td>
+                        <td>${poopMark}</td>
+                    </tr>`;
             });
         }
 
-        // --- 備份 ---
         function exportAllData() {
             const data = JSON.stringify({daily:dailyDb, inbody:inbodyDb});
             const blob = new Blob([data], {type:"application/json"});
