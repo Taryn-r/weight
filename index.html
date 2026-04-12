@@ -42,7 +42,6 @@
         .history-table th { color: #94a3b8; font-weight: bold; padding: 10px 2px; border-bottom: 1px solid #f1f5f9; text-align: center; }
         .history-table td { padding: 12px 2px; text-align: center; border-bottom: 1px solid #f8fafc; white-space: nowrap; }
         
-        /* 確保 Slider 點點佔位固定 */
         .poop-dot-space { height: 12px; display: flex; align-items: center; justify-content: center; }
         .blue-dot { color: #60a5fa; font-size: 12px; }
     </style>
@@ -52,7 +51,10 @@
     <header class="flex justify-between items-center p-5 max-w-md mx-auto sticky top-0 bg-[#f4f9f9]/80 backdrop-blur-sm z-10">
         <button onclick="document.getElementById('date-picker').showPicker()" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-teal-400 shadow-sm"><i class="fa-solid fa-calendar-alt"></i></button>
         <h1 id="main-title" class="text-xl font-black text-slate-800 tracking-wider">每日紀錄</h1>
-        <button onclick="handleHistoryBtn()" id="right-btn" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-400 shadow-sm"><i class="fa-solid fa-list-ul"></i></button>
+        <div id="right-btn-container">
+            <button onclick="handleHistoryBtn()" id="btn-history" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-400 shadow-sm"><i class="fa-solid fa-list-ul"></i></button>
+            <button onclick="openModal('inbody-form-modal')" id="btn-add-inbody" class="hidden w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center text-white shadow-sm font-bold text-xl">+</button>
+        </div>
     </header>
 
     <main class="max-w-md mx-auto px-4 space-y-4">
@@ -93,7 +95,6 @@
             <div id="inbody-latest-view" class="space-y-4"></div>
             <div class="flex justify-between items-center px-2">
                 <h4 class="text-xs font-bold text-gray-300 uppercase">歷史報告清單</h4>
-                <button onclick="openModal('inbody-form-modal')" class="text-xs bg-blue-400 text-white px-3 py-1 rounded-full shadow-sm font-bold">+ 新增數據</button>
             </div>
             <div id="inbody-history-list" class="space-y-3 pb-10"></div>
         </div>
@@ -193,10 +194,22 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`page-${page}`).classList.add('active');
             document.getElementById(`nav-${page}`).classList.add('active');
+            
             const titles = { daily: '每日紀錄', inbody: 'InBody 數據庫', settings: '設置中心' };
             document.getElementById('main-title').innerText = titles[page];
-            document.getElementById('right-btn').style.visibility = (page === 'daily') ? 'visible' : 'hidden';
-            if (page === 'inbody') renderInBodyPage();
+            
+            // 修正按鈕切換邏輯
+            if (page === 'daily') {
+                document.getElementById('btn-history').classList.remove('hidden');
+                document.getElementById('btn-add-inbody').classList.add('hidden');
+            } else if (page === 'inbody') {
+                document.getElementById('btn-history').classList.add('hidden');
+                document.getElementById('btn-add-inbody').classList.remove('hidden');
+                renderInBodyPage();
+            } else {
+                document.getElementById('btn-history').classList.add('hidden');
+                document.getElementById('btn-add-inbody').classList.add('hidden');
+            }
         }
 
         function openModal(id) {
@@ -206,6 +219,13 @@
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         // --- InBody 邏輯 ---
+        function resetInBodyForm() {
+            const ids = ['f-date', 'f-weight', 'f-muscle', 'f-fat-kg', 'f-bmi', 'f-fat-p', 'f-whr', 'f-moist', 'f-visceral', 'f-bmr', 'f-score'];
+            ids.forEach(id => {
+                document.getElementById(id).value = (id === 'f-date') ? getLocalDateString() : '';
+            });
+        }
+
         function submitInBody() {
             const data = { 
                 id: Date.now(), 
@@ -289,7 +309,6 @@
                 const ds = getLocalDateString(d);
                 const active = (ds === currentViewingDate) ? '!opacity-100 scale-110 font-black text-teal-500' : '';
                 const hasData = dailyDb[ds] ? dailyDb[ds].weight : '--';
-                // 修正：不論有無點點，都渲染一個固定的容器，確保日期位置不變
                 const poopDot = (dailyDb[ds] && dailyDb[ds].poop) ? '<span class="text-[8px] text-blue-400">●</span>' : '';
                 slider.innerHTML += `
                     <button onclick="changeDate('${ds}')" class="flex-shrink-0 text-center opacity-40 transition-all ${active}">
@@ -334,7 +353,6 @@
                     if (!isNaN(prevWeight) && !isNaN(curWeight)) {
                         const diff = (curWeight - prevWeight).toFixed(1);
                         const diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : '');
-                        // 修正：將括號包在固定寬度的容器中，或與數字放在同一個 flex 容器
                         diffHtml = `<span class="${diffClass} text-[9px] font-normal tracking-tighter ml-1">(${diff > 0 ? '+' : ''}${diff})</span>`;
                     }
                 }
