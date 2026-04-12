@@ -12,7 +12,6 @@
     <style>
         :root { --bear-mint: #a3e4d7; --bear-soft-bg: #f4f9f9; --text-dark: #566573; }
         
-        /* 允許下拉整理行為 */
         html, body { 
             overscroll-behavior-y: auto; 
             height: 100%;
@@ -42,6 +41,9 @@
         .history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .history-table th { color: #94a3b8; font-weight: bold; padding: 10px 2px; border-bottom: 1px solid #f1f5f9; text-align: center; }
         .history-table td { padding: 12px 2px; text-align: center; border-bottom: 1px solid #f8fafc; white-space: nowrap; }
+        
+        /* 確保 Slider 點點佔位固定 */
+        .poop-dot-space { height: 12px; display: flex; align-items: center; justify-content: center; }
         .blue-dot { color: #60a5fa; font-size: 12px; }
     </style>
 </head>
@@ -204,13 +206,6 @@
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         // --- InBody 邏輯 ---
-        function resetInBodyForm() {
-            const ids = ['f-date', 'f-weight', 'f-muscle', 'f-fat-kg', 'f-bmi', 'f-fat-p', 'f-whr', 'f-moist', 'f-visceral', 'f-bmr', 'f-score'];
-            ids.forEach(id => {
-                document.getElementById(id).value = (id === 'f-date') ? getLocalDateString() : '';
-            });
-        }
-
         function submitInBody() {
             const data = { 
                 id: Date.now(), 
@@ -294,8 +289,14 @@
                 const ds = getLocalDateString(d);
                 const active = (ds === currentViewingDate) ? '!opacity-100 scale-110 font-black text-teal-500' : '';
                 const hasData = dailyDb[ds] ? dailyDb[ds].weight : '--';
+                // 修正：不論有無點點，都渲染一個固定的容器，確保日期位置不變
                 const poopDot = (dailyDb[ds] && dailyDb[ds].poop) ? '<span class="text-[8px] text-blue-400">●</span>' : '';
-                slider.innerHTML += `<button onclick="changeDate('${ds}')" class="flex-shrink-0 text-center opacity-40 transition-all ${active}"><p class="text-[10px]">${i===0?'今':d.getDate()}</p><p class="text-xs">${hasData}k</p>${poopDot}</button>`;
+                slider.innerHTML += `
+                    <button onclick="changeDate('${ds}')" class="flex-shrink-0 text-center opacity-40 transition-all ${active}">
+                        <p class="text-[10px]">${i===0?'今':d.getDate()}</p>
+                        <p class="text-xs">${hasData}k</p>
+                        <div class="poop-dot-space">${poopDot}</div>
+                    </button>`;
             }
         }
         
@@ -322,9 +323,10 @@
             
             dates.forEach((d) => {
                 const cur = dailyDb[d];
-                let diffText = "";
+                let diffHtml = "";
                 const sortedDates = Object.keys(dailyDb).sort(); 
                 const curIdx = sortedDates.indexOf(d);
+                
                 if (curIdx > 0) {
                     const prevDate = sortedDates[curIdx - 1];
                     const prevWeight = parseFloat(dailyDb[prevDate].weight);
@@ -332,8 +334,8 @@
                     if (!isNaN(prevWeight) && !isNaN(curWeight)) {
                         const diff = (curWeight - prevWeight).toFixed(1);
                         const diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : '');
-                        // 這裡移除了 <br>，並微調字體大小與粗細
-                        diffText = ` <span class="${diffClass} text-[9px] font-normal tracking-tighter">(${diff > 0 ? '+' : ''}${diff})</span>`;
+                        // 修正：將括號包在固定寬度的容器中，或與數字放在同一個 flex 容器
+                        diffHtml = `<span class="${diffClass} text-[9px] font-normal tracking-tighter ml-1">(${diff > 0 ? '+' : ''}${diff})</span>`;
                     }
                 }
 
@@ -342,7 +344,12 @@
                 tbody.innerHTML += `
                     <tr onclick="changeDate('${d}');closeModal('history-modal')">
                         <td class="text-gray-400 font-medium">${d.split('-').slice(1).join('/')}</td>
-                        <td class="font-bold text-slate-600">${cur.weight || '--'}${diffText}</td>
+                        <td class="text-slate-600">
+                            <div class="inline-flex items-baseline justify-center">
+                                <span class="font-bold">${cur.weight || '--'}</span>
+                                <div style="min-width: 35px; text-align: left;">${diffHtml}</div>
+                            </div>
+                        </td>
                         <td class="text-blue-400">${cur.pro || 0}g</td>
                         <td class="text-orange-300">${cur.carb || 0}g</td>
                         <td>${poopMark}</td>
