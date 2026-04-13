@@ -32,7 +32,7 @@
         .tab-content.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .input-bear { border: 1px solid var(--bear-mint); border-radius: 0.75rem; padding: 0.6rem; background: white; width: 100%; text-align: center; font-size: 0.9rem; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; backdrop-filter: blur(5px); justify-content: center; align-items: center; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; backdrop-filter: blur(5px); justify-content: center; align-items: center; }
         .diff-pos { color: #f87171; font-weight: normal; }
         .diff-neg { color: #34d399; font-weight: normal; }
         .inbody-label { font-size: 10px; color: #94a3b8; margin-bottom: 2px; display: block; font-weight: bold; }
@@ -45,17 +45,35 @@
         .poop-dot-space { height: 12px; display: flex; align-items: center; justify-content: center; }
         .blue-dot { color: #60a5fa; font-size: 12px; }
 
-        /* 確保 header 內的按鈕可以被點擊 */
-        header button { position: relative; z-index: 20; }
+        /* 日曆按鈕特殊構造：讓 input 覆蓋在 icon 上 */
+        .calendar-wrapper { position: relative; width: 40px; height: 40px; }
+        .calendar-wrapper input[type="date"] {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            z-index: 30;
+            cursor: pointer;
+        }
+        .calendar-icon-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 9999px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2dd4bf; /* teal-400 */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            z-index: 20;
+        }
     </style>
 </head>
 <body>
 
-    <header class="flex justify-between items-center p-5 max-w-md mx-auto sticky top-0 bg-[#f4f9f9]/80 backdrop-blur-sm z-10">
-        <div class="w-10">
-            <button id="btn-calendar" onclick="document.getElementById('date-picker').showPicker()" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-teal-400 shadow-sm">
-                <i class="fa-solid fa-calendar-alt"></i>
-            </button>
+    <header class="flex justify-between items-center p-5 max-w-md mx-auto sticky top-0 bg-[#f4f9f9]/90 backdrop-blur-md z-[100]">
+        <div class="calendar-wrapper" id="cal-wrap">
+            <div class="calendar-icon-bg"><i class="fa-solid fa-calendar-alt"></i></div>
+            <input type="date" id="date-picker" onchange="changeDate(this.value)">
         </div>
 
         <h1 id="main-title" class="text-xl font-black text-slate-800 tracking-wider">每日紀錄</h1>
@@ -130,7 +148,7 @@
         </div>
     </main>
 
-    <footer class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md rounded-t-[2.5rem] shadow-lg z-50 pb-safe">
+    <footer class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md rounded-t-[2.5rem] shadow-lg z-[100] pb-safe">
         <div class="max-w-md mx-auto flex justify-around p-4">
             <button onclick="switchPage('daily')" id="nav-daily" class="nav-item active flex flex-col items-center"><i class="fa-solid fa-calendar-check text-xl"></i><span class="text-[10px] mt-1 font-bold">每日紀錄</span></button>
             <button onclick="switchPage('inbody')" id="nav-inbody" class="nav-item flex flex-col items-center"><i class="fa-solid fa-weight-scale text-xl"></i><span class="text-[10px] mt-1 font-bold">InBody</span></button>
@@ -188,8 +206,6 @@
         </div>
     </div>
 
-    <input type="date" id="date-picker" class="hidden" onchange="changeDate(this.value)">
-
     <script>
         function getLocalDateString(dateObj = new Date()) {
             const offset = dateObj.getTimezoneOffset() * 60000;
@@ -200,7 +216,11 @@
         let inbodyDb = JSON.parse(localStorage.getItem('bear_inbody_db') || '[]');
         let currentViewingDate = getLocalDateString();
 
-        function init() { renderDateSlider(); updateDailyUI(); }
+        function init() { 
+            document.getElementById('date-picker').value = currentViewingDate;
+            renderDateSlider(); 
+            updateDailyUI(); 
+        }
 
         function switchPage(page) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -211,13 +231,9 @@
             const titles = { daily: '每日紀錄', inbody: 'InBody 數據庫', settings: '設置中心' };
             document.getElementById('main-title').innerText = titles[page];
             
-            // 同步切換日曆按鈕顯示：設置頁面時隱藏
-            const calBtn = document.getElementById('btn-calendar');
-            if (page === 'settings') {
-                calBtn.style.visibility = 'hidden';
-            } else {
-                calBtn.style.visibility = 'visible';
-            }
+            // 設置頁面時隱藏左側日曆
+            const calWrap = document.getElementById('cal-wrap');
+            calWrap.style.visibility = (page === 'settings') ? 'hidden' : 'visible';
 
             if (page === 'daily') {
                 document.getElementById('btn-history').classList.remove('hidden');
@@ -318,7 +334,13 @@
             renderDateSlider(); updateDailyUI(); alert('紀錄成功 ✨');
         }
         function deleteDailyData() { if(confirm('確定清空今日紀錄？')){ delete dailyDb[currentViewingDate]; localStorage.setItem('bear_daily_db', JSON.stringify(dailyDb)); renderDateSlider(); updateDailyUI(); } }
-        function changeDate(d) { currentViewingDate = d; renderDateSlider(); updateDailyUI(); }
+        
+        function changeDate(d) { 
+            if(!d) return;
+            currentViewingDate = d; 
+            renderDateSlider(); 
+            updateDailyUI(); 
+        }
         
         function renderDateSlider() {
             const slider = document.getElementById('date-slider'); slider.innerHTML = '';
@@ -350,6 +372,8 @@
             document.getElementById('in-carb').value = d.carb || '';
             document.getElementById('in-content').value = d.content || '';
             document.getElementById('in-poop').checked = d.poop || false;
+            // 同步更新日曆 input 的值
+            document.getElementById('date-picker').value = currentViewingDate;
         }
 
         function handleHistoryBtn() { openModal('history-modal'); renderHistoryTable(); }
