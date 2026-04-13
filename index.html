@@ -44,16 +44,29 @@
         
         .poop-dot-space { height: 12px; display: flex; align-items: center; justify-content: center; }
         .blue-dot { color: #60a5fa; font-size: 12px; }
+
+        /* 確保 header 內的按鈕可以被點擊 */
+        header button { position: relative; z-index: 20; }
     </style>
 </head>
 <body>
 
     <header class="flex justify-between items-center p-5 max-w-md mx-auto sticky top-0 bg-[#f4f9f9]/80 backdrop-blur-sm z-10">
-        <button onclick="document.getElementById('date-picker').showPicker()" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-teal-400 shadow-sm"><i class="fa-solid fa-calendar-alt"></i></button>
+        <div class="w-10">
+            <button id="btn-calendar" onclick="document.getElementById('date-picker').showPicker()" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-teal-400 shadow-sm">
+                <i class="fa-solid fa-calendar-alt"></i>
+            </button>
+        </div>
+
         <h1 id="main-title" class="text-xl font-black text-slate-800 tracking-wider">每日紀錄</h1>
-        <div id="right-btn-container">
-            <button onclick="handleHistoryBtn()" id="btn-history" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-400 shadow-sm"><i class="fa-solid fa-list-ul"></i></button>
-            <button onclick="openModal('inbody-form-modal')" id="btn-add-inbody" class="hidden w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center text-white shadow-sm font-bold text-xl">+</button>
+
+        <div class="w-10 flex justify-end">
+            <button onclick="handleHistoryBtn()" id="btn-history" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-400 shadow-sm">
+                <i class="fa-solid fa-list-ul"></i>
+            </button>
+            <button onclick="openModal('inbody-form-modal')" id="btn-add-inbody" class="hidden w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center text-white shadow-sm font-bold text-xl">
+                +
+            </button>
         </div>
     </header>
 
@@ -198,7 +211,14 @@
             const titles = { daily: '每日紀錄', inbody: 'InBody 數據庫', settings: '設置中心' };
             document.getElementById('main-title').innerText = titles[page];
             
-            // 修正按鈕切換邏輯
+            // 同步切換日曆按鈕顯示：設置頁面時隱藏
+            const calBtn = document.getElementById('btn-calendar');
+            if (page === 'settings') {
+                calBtn.style.visibility = 'hidden';
+            } else {
+                calBtn.style.visibility = 'visible';
+            }
+
             if (page === 'daily') {
                 document.getElementById('btn-history').classList.remove('hidden');
                 document.getElementById('btn-add-inbody').classList.add('hidden');
@@ -218,7 +238,6 @@
         }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // --- InBody 邏輯 ---
         function resetInBodyForm() {
             const ids = ['f-date', 'f-weight', 'f-muscle', 'f-fat-kg', 'f-bmi', 'f-fat-p', 'f-whr', 'f-moist', 'f-visceral', 'f-bmr', 'f-score'];
             ids.forEach(id => {
@@ -287,7 +306,6 @@
 
         function deleteInBody(id, e) { e.stopPropagation(); if(confirm('確定刪除此筆 InBody 紀錄？')){ inbodyDb = inbodyDb.filter(i => i.id !== id); localStorage.setItem('bear_inbody_db', JSON.stringify(inbodyDb)); renderInBodyPage(); } }
 
-        // --- 每日紀錄邏輯 ---
         function saveDailyData() {
             dailyDb[currentViewingDate] = { 
                 weight: document.getElementById('in-weight').value, 
