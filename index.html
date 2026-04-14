@@ -28,13 +28,15 @@
         #date-slider { scroll-behavior: smooth; -webkit-overflow-scrolling: touch; display: flex; overflow-x: auto; gap: 0.8rem; padding: 1rem; scroll-snap-type: x mandatory; }
         .date-item { scroll-snap-align: center; flex: 0 0 52px; }
         
-        /* 歷史表格優化：確保全部在同一排 */
-        .history-table { width: 100%; table-layout: fixed; font-size: 12px; border-collapse: collapse; }
-        .history-table th, .history-table td { padding: 12px 2px; vertical-align: middle; border-bottom: 1px solid #f8fafc; }
+        /* 歷史表格優化：精準對齊數字 */
+        .history-table { width: 100%; table-layout: fixed; font-size: 13px; border-collapse: collapse; }
+        .history-table th, .history-table td { padding: 12px 2px; vertical-align: middle; border-bottom: 1px solid #f8fafc; text-align: center; }
         .history-table th { color: #94a3b8; font-weight: normal; font-size: 11px; }
-        .cell-weight-group { display: flex; align-items: baseline; justify-content: center; gap: 2px; }
-        .num-main { font-weight: bold; font-size: 13px; color: #475569; }
-        .num-diff { font-size: 9px; min-width: 32px; text-align: left; }
+        
+        /* 體重欄位的對齊邏輯 */
+        .cell-weight-container { display: flex; align-items: baseline; justify-content: center; position: relative; width: 100%; }
+        .num-main { font-weight: bold; font-size: 14px; color: #475569; min-width: 40px; text-align: center; }
+        .num-diff { font-size: 9px; position: absolute; left: calc(50% + 22px); min-width: 30px; text-align: left; }
 
         .chart-btn { padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; background: #f1f5f9; color: #94a3b8; }
         .chart-btn.active { background: #a3e4d7; color: white; }
@@ -125,10 +127,10 @@
                     <thead>
                         <tr>
                             <th style="width: 18%;">日期</th>
-                            <th style="width: 32%;">體重 (差)</th>
-                            <th style="width: 15%;">蛋白</th>
-                            <th style="width: 15%;">碳水</th>
-                            <th style="width: 12%;">🚽</th>
+                            <th style="width: 35%;">體重 (差)</th>
+                            <th style="width: 16%;">蛋白</th>
+                            <th style="width: 16%;">碳水</th>
+                            <th style="width: 15%;">🚽</th>
                         </tr>
                     </thead>
                     <tbody id="history-table-body"></tbody>
@@ -152,7 +154,7 @@
                 <div><label class="inbody-label">內臟脂肪</label><input id="f-visceral" type="number" class="input-bear"></div>
                 <div><label class="inbody-label">基礎代謝 (kcal)</label><input id="f-bmr" type="number" class="input-bear"></div>
                 <div><label class="inbody-label">身體評分</label><input id="f-score" type="number" class="input-bear"></div>
-                <div class="col-span-2 mt-4"><button onclick="submitInBody()" class="w-full bg-blue-400 text-white py-4 rounded-2xl font-bold shadow-md">儲存數據</button></div>
+                <div class="col-span-2 mt-4"><button onclick="submitInBody()" class="w-full bg-blue-400 text-white py-4 rounded-2xl font-bold">儲存數據</button></div>
             </div>
         </div>
     </div>
@@ -262,7 +264,7 @@
                 }
                 return `<tr onclick="changeDate('${d}');closeModal('history-modal')">
                     <td>${d.slice(5).replace('-','/')}</td>
-                    <td><div class="cell-weight-group"><span class="num-main">${cur.weight||'--'}</span>${diff}</div></td>
+                    <td><div class="cell-weight-container"><span class="num-main">${cur.weight||'--'}</span>${diff}</div></td>
                     <td>${cur.pro}g</td>
                     <td>${cur.carb}g</td>
                     <td>${cur.poop?'🔵':''}</td>
