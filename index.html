@@ -25,11 +25,17 @@
         .calendar-wrapper { position: relative; width: 40px; height: 40px; }
         .calendar-wrapper input[type="date"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: 30; cursor: pointer; }
         .calendar-icon-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 9999px; background: white; display: flex; align-items: center; justify-content: center; color: #2dd4bf; box-shadow: 0 1px 2px rgba(0,0,0,0.05); z-index: 20; }
-        #date-slider { scroll-behavior: smooth; -webkit-overflow-scrolling: touch; display: flex; overflow-x: auto; gap: 1rem; padding: 1rem; scroll-snap-type: x mandatory; }
-        .date-item { scroll-snap-align: center; flex: 0 0 55px; }
-        .weight-cell { display: flex; justify-content: center; align-items: baseline; gap: 4px; }
-        .weight-num { min-width: 45px; text-align: right; font-weight: bold; }
-        .weight-diff { min-width: 40px; text-align: left; font-size: 10px; }
+        #date-slider { scroll-behavior: smooth; -webkit-overflow-scrolling: touch; display: flex; overflow-x: auto; gap: 0.8rem; padding: 1rem; scroll-snap-type: x mandatory; }
+        .date-item { scroll-snap-align: center; flex: 0 0 52px; }
+        
+        /* 歷史表格優化：確保全部在同一排 */
+        .history-table { width: 100%; table-layout: fixed; font-size: 12px; border-collapse: collapse; }
+        .history-table th, .history-table td { padding: 12px 2px; vertical-align: middle; border-bottom: 1px solid #f8fafc; }
+        .history-table th { color: #94a3b8; font-weight: normal; font-size: 11px; }
+        .cell-weight-group { display: flex; align-items: baseline; justify-content: center; gap: 2px; }
+        .num-main { font-weight: bold; font-size: 13px; color: #475569; }
+        .num-diff { font-size: 9px; min-width: 32px; text-align: left; }
+
         .chart-btn { padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; background: #f1f5f9; color: #94a3b8; }
         .chart-btn.active { background: #a3e4d7; color: white; }
     </style></head><body>
@@ -58,8 +64,8 @@
                 <div class="macaron-card p-4"><p class="text-[10px] text-gray-400">碳水 (g)</p><p id="view-carb" class="text-2xl font-black text-orange-300">0</p></div>
             </div>
             <div class="macaron-card p-5">
-                <div id="view-poop" class="mb-2 hidden"><span class="bg-blue-50 text-blue-500 text-[10px] px-2 py-1 rounded-full font-bold">🔵 今日已上廁所</span></div>
-                <p id="view-content" class="text-sm text-gray-500 italic">尚未寫下內容...</p>
+                <div id="view-poop" class="mb-2 hidden"><span class="bg-blue-50 text-blue-500 text-[10px] px-2 py-1 rounded-full font-bold">🔵 今日已完成排便</span></div>
+                <p id="view-content" class="text-sm text-gray-500 italic">點擊下方輸入紀錄...</p>
             </div>
             <div class="macaron-card p-6 space-y-4">
                 <div class="grid grid-cols-3 gap-3">
@@ -67,10 +73,10 @@
                     <input id="in-pro" type="number" class="input-bear" placeholder="蛋白">
                     <input id="in-carb" type="number" class="input-bear" placeholder="碳水">
                 </div>
-                <label class="flex items-center gap-2 text-sm font-bold text-slate-500 cursor-pointer"><input type="checkbox" id="in-poop" class="w-5 h-5 accent-teal-300"> 🚽 今日有排便</label>
-                <textarea id="in-content" rows="2" class="input-bear text-left" placeholder="記錄飲食..."></textarea>
+                <label class="flex items-center gap-2 text-sm font-bold text-slate-500 cursor-pointer"><input type="checkbox" id="in-poop" class="w-5 h-5 accent-teal-300"> 🚽 今日有上廁所</label>
+                <textarea id="in-content" rows="2" class="input-bear text-left" placeholder="記錄飲食、心情..."></textarea>
                 <div class="flex gap-2">
-                    <button onclick="saveDailyData()" class="flex-1 bg-gradient-to-r from-teal-200 to-blue-200 text-white py-4 rounded-2xl font-bold">儲存</button>
+                    <button onclick="saveDailyData()" class="flex-1 bg-gradient-to-r from-teal-200 to-blue-200 text-white py-4 rounded-2xl font-bold shadow-sm">儲存數據</button>
                     <button onclick="deleteDailyData()" class="w-14 bg-red-50 text-red-300 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
             </div>
@@ -78,14 +84,13 @@
 
         <div id="page-inbody" class="tab-content space-y-4">
             <div id="inbody-latest-view"></div>
-            <div class="px-2"><h4 class="text-xs font-bold text-gray-300 uppercase tracking-widest">歷史紀錄</h4></div>
             <div id="inbody-history-list" class="space-y-3 pb-10"></div>
         </div>
 
         <div id="page-settings" class="tab-content space-y-4 pt-4">
             <div class="macaron-card p-6 space-y-4">
-                <button onclick="exportAllData()" class="w-full p-4 bg-teal-50 text-teal-700 rounded-xl font-bold flex justify-between"><span>備份匯出</span><i class="fa-solid fa-download"></i></button>
-                <button onclick="document.getElementById('import-file').click()" class="w-full p-4 bg-blue-50 text-blue-700 rounded-xl font-bold flex justify-between"><span>資料還原</span><i class="fa-solid fa-upload"></i></button>
+                <button onclick="exportAllData()" class="w-full p-4 bg-teal-50 text-teal-700 rounded-xl font-bold flex justify-between"><span>備份匯出 (.json)</span><i class="fa-solid fa-download"></i></button>
+                <button onclick="document.getElementById('import-file').click()" class="w-full p-4 bg-blue-50 text-blue-700 rounded-xl font-bold flex justify-between"><span>還原匯入</span><i class="fa-solid fa-upload"></i></button>
                 <input type="file" id="import-file" class="hidden" accept=".json" onchange="importAllData(event)">
             </div>
         </div>
@@ -112,6 +117,26 @@
         </div>
     </div>
 
+    <div id="history-modal" class="modal items-end">
+        <div class="bg-white w-full max-w-md rounded-t-[3rem] max-h-[85vh] overflow-hidden flex flex-col">
+            <div class="p-8 border-b flex justify-between items-center"><h3 class="font-bold text-teal-600">紀錄歷史清單</h3><button onclick="closeModal('history-modal')" class="text-gray-300 text-2xl">&times;</button></div>
+            <div class="overflow-y-auto p-2 flex-1">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 18%;">日期</th>
+                            <th style="width: 32%;">體重 (差)</th>
+                            <th style="width: 15%;">蛋白</th>
+                            <th style="width: 15%;">碳水</th>
+                            <th style="width: 12%;">🚽</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div id="inbody-form-modal" class="modal">
         <div class="bg-white w-full max-w-md h-[90vh] rounded-t-[2rem] p-6 overflow-y-auto">
             <div class="flex justify-between items-center mb-6"><h3 class="font-bold text-xl text-blue-500">新增 InBody 報告</h3><button onclick="closeModal('inbody-form-modal')" class="text-2xl text-gray-300">&times;</button></div>
@@ -127,7 +152,7 @@
                 <div><label class="inbody-label">內臟脂肪</label><input id="f-visceral" type="number" class="input-bear"></div>
                 <div><label class="inbody-label">基礎代謝 (kcal)</label><input id="f-bmr" type="number" class="input-bear"></div>
                 <div><label class="inbody-label">身體評分</label><input id="f-score" type="number" class="input-bear"></div>
-                <div class="col-span-2 mt-4"><button onclick="submitInBody()" class="w-full bg-blue-400 text-white py-4 rounded-2xl font-bold">儲存數據</button></div>
+                <div class="col-span-2 mt-4"><button onclick="submitInBody()" class="w-full bg-blue-400 text-white py-4 rounded-2xl font-bold shadow-md">儲存數據</button></div>
             </div>
         </div>
     </div>
@@ -136,13 +161,6 @@
         <div class="bg-white w-11/12 max-w-sm rounded-[2rem] p-6 space-y-4" onclick="event.stopPropagation()">
             <div id="inbody-detail-content"></div>
             <button onclick="closeModal('inbody-detail-modal')" class="w-full py-3 bg-gray-100 text-gray-400 rounded-xl font-bold">關閉</button>
-        </div>
-    </div>
-
-    <div id="history-modal" class="modal items-end">
-        <div class="bg-white w-full max-w-md rounded-t-[3rem] max-h-[85vh] overflow-hidden flex flex-col">
-            <div class="p-8 border-b flex justify-between items-center"><h3 class="font-bold text-teal-600">紀錄歷史</h3><button onclick="closeModal('history-modal')" class="text-gray-300 text-2xl">&times;</button></div>
-            <div class="overflow-y-auto p-4 flex-1"><table class="w-full text-center text-sm"><thead><tr class="text-gray-400 border-b"><th class="py-2">日期</th><th class="py-2">體重(差)</th><th>蛋</th><th>碳</th><th>🚽</th></tr></thead><tbody id="history-table-body"></tbody></table></div>
         </div>
     </div>
 
@@ -164,10 +182,8 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`page-${page}`).classList.add('active');
             document.getElementById(`nav-${page}`).classList.add('active');
-            
             if(page === 'daily') updateDailyUI();
             else document.getElementById('main-title').innerText = (page === 'inbody') ? 'InBody' : '設置';
-            
             document.getElementById('cal-wrap').style.visibility = (page === 'settings') ? 'hidden' : 'visible';
             document.getElementById('btn-history').classList.toggle('hidden', page !== 'daily');
             document.getElementById('btn-chart').classList.toggle('hidden', page !== 'daily');
@@ -191,7 +207,7 @@
                 const d = new Date(currentViewingDate); d.setDate(d.getDate()+i);
                 const ds = getLocalDateString(d);
                 const isActive = (ds === currentViewingDate) ? 'date-active !opacity-100 scale-110 font-black text-teal-500' : '';
-                slider.innerHTML += `<button onclick="changeDate('${ds}')" class="date-item flex-shrink-0 text-center opacity-40 transition-all ${isActive}"><p class="text-[10px]">${d.getMonth()+1}/${d.getDate()}</p><p class="text-xs">${dailyDb[ds]?.weight || '--'}</p><div class="h-1 w-1 mx-auto mt-1 rounded-full ${dailyDb[ds]?.poop ? 'bg-blue-400' : ''}"></div></button>`;
+                slider.innerHTML += `<button onclick="changeDate('${ds}')" class="date-item flex-shrink-0 text-center opacity-40 transition-all ${isActive}"><p class="text-[10px]">${d.getMonth()+1}/${d.getDate()}</p><p class="text-xs font-bold">${dailyDb[ds]?.weight || '--'}</p><div class="h-1 w-1 mx-auto mt-1 rounded-full ${dailyDb[ds]?.poop ? 'bg-blue-400' : ''}"></div></button>`;
             }
         }
 
@@ -203,7 +219,7 @@
             document.getElementById('view-weight').innerText = d.weight || '--';
             document.getElementById('view-pro').innerText = d.pro || 0;
             document.getElementById('view-carb').innerText = d.carb || 0;
-            document.getElementById('view-content').innerText = d.content || '寫點紀錄吧...';
+            document.getElementById('view-content').innerText = d.content || '點擊下方輸入紀錄...';
             d.poop ? document.getElementById('view-poop').classList.remove('hidden') : document.getElementById('view-poop').classList.add('hidden');
             document.getElementById('in-weight').value = d.weight;
             document.getElementById('in-pro').value = d.pro || '';
@@ -218,7 +234,7 @@
             localStorage.setItem('bear_daily_db', JSON.stringify(dailyDb)); renderDateSlider(); updateDailyUI();
         }
 
-        function deleteDailyData() { if(confirm('刪除今日？')){ delete dailyDb[currentViewingDate]; localStorage.setItem('bear_daily_db', JSON.stringify(dailyDb)); renderDateSlider(); updateDailyUI(); } }
+        function deleteDailyData() { if(confirm('確定清空？')){ delete dailyDb[currentViewingDate]; localStorage.setItem('bear_daily_db', JSON.stringify(dailyDb)); renderDateSlider(); updateDailyUI(); } }
 
         function openChart() { openModal('chart-modal'); updateChartRange('7'); }
         function updateChartRange(range) {
@@ -242,13 +258,18 @@
                 const cur = dailyDb[d]; const curIdx = dates.indexOf(d); let diff = "";
                 if(curIdx > 0 && dailyDb[dates[curIdx-1]].weight && cur.weight) {
                     const df = (cur.weight - dailyDb[dates[curIdx-1]].weight).toFixed(1);
-                    diff = `<span class="${df>0?'diff-pos':'diff-neg'} text-[9px] ml-1">(${df>0?'+':''}${df})</span>`;
+                    diff = `<span class="${df>0?'diff-pos':'diff-neg'} num-diff">${df>0?'+':''}${df}</span>`;
                 }
-                return `<tr class="border-b" onclick="changeDate('${d}');closeModal('history-modal')"><td class="py-3">${d.slice(5)}</td><td class="weight-cell"><span class="weight-num">${cur.weight||'--'}</span><span class="weight-diff">${diff}</span></td><td>${cur.pro}</td><td>${cur.carb}</td><td>${cur.poop?'🔵':''}</td></tr>`;
+                return `<tr onclick="changeDate('${d}');closeModal('history-modal')">
+                    <td>${d.slice(5).replace('-','/')}</td>
+                    <td><div class="cell-weight-group"><span class="num-main">${cur.weight||'--'}</span>${diff}</div></td>
+                    <td>${cur.pro}g</td>
+                    <td>${cur.carb}g</td>
+                    <td>${cur.poop?'🔵':''}</td>
+                </tr>`;
             }).join('');
         }
 
-        // InBody 核心邏輯補回
         function submitInBody() {
             const data = { id: Date.now(), date: document.getElementById('f-date').value, weight: parseFloat(document.getElementById('f-weight').value)||0, muscle: parseFloat(document.getElementById('f-muscle').value)||0, fatKg: parseFloat(document.getElementById('f-fat-kg').value)||0, bmi: parseFloat(document.getElementById('f-bmi').value)||0, fatP: parseFloat(document.getElementById('f-fat-p').value)||0, whr: parseFloat(document.getElementById('f-whr').value)||0, moist: parseFloat(document.getElementById('f-moist').value)||0, visceral: parseInt(document.getElementById('f-visceral').value)||0, bmr: parseInt(document.getElementById('f-bmr').value)||0, score: parseInt(document.getElementById('f-score').value)||0 };
             inbodyDb.unshift(data); inbodyDb.sort((a,b) => b.date.localeCompare(a.date));
@@ -258,8 +279,7 @@
         function renderInBodyPage() {
             const latestArea = document.getElementById('inbody-latest-view');
             const historyList = document.getElementById('inbody-history-list');
-            if(!inbodyDb.length) { latestArea.innerHTML = '<div class="macaron-card p-10 text-center text-gray-400">尚無 InBody 資料</div>'; return; }
-            
+            if(!inbodyDb.length) { latestArea.innerHTML = '<div class="macaron-card p-10 text-center text-gray-400">尚無資料</div>'; return; }
             const latest = inbodyDb[0]; const prev = inbodyDb[1];
             latestArea.innerHTML = `
                 <div class="macaron-card p-6 border-t-8 border-t-blue-200" onclick="viewInBodyDetail(${latest.id})">
@@ -271,7 +291,6 @@
                         <div class="bg-slate-50 p-2 rounded-xl"><p class="inbody-label">內臟脂肪</p><p class="font-black">${latest.visceral}${getInBodyDiff(latest.visceral, prev?.visceral)}</p></div>
                     </div>
                 </div>`;
-
             historyList.innerHTML = inbodyDb.map(i => `<div class="macaron-card p-4 flex justify-between items-center" onclick="viewInBodyDetail(${i.id})"><div><p class="font-bold text-sm">${i.date}</p><p class="text-[10px] text-gray-400">體重 ${i.weight} / 體脂 ${i.fatP}%</p></div><button onclick="deleteInBody(${i.id}, event)" class="text-red-100 p-2"><i class="fa-solid fa-trash-can"></i></button></div>`).join('');
         }
 
@@ -285,19 +304,15 @@
 
         function viewInBodyDetail(id) {
             const it = inbodyDb.find(i => i.id === id); if(!it) return;
-            document.getElementById('inbody-detail-content').innerHTML = `<h3 class="text-center font-black mb-4">${it.date} 完整報告</h3>
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">體重</span>${it.weight} kg</div>
-                    <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">骨骼肌</span>${it.muscle} kg</div>
-                    <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">體脂重</span>${it.fatKg} kg</div>
-                    <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">體脂率</span>${it.fatP} %</div>
-                    <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">BMI</span>${it.bmi}</div>
-                    <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">腰臀比</span>${it.whr}</div>
-                    <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">水分比</span>${it.moist} %</div>
-                    <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">內臟脂肪</span>${it.visceral}</div>
-                    <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">基礎代謝</span>${it.bmr} kcal</div>
-                    <div class="col-span-2 bg-blue-50 p-3 rounded-lg text-center font-bold text-blue-600"><span class="inbody-label">身體評分</span>${it.score} 分</div>
-                </div>`;
+            document.getElementById('inbody-detail-content').innerHTML = `<h3 class="text-center font-black mb-4">${it.date} 完整報告</h3><div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">體重</span>${it.weight} kg</div>
+                <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">骨骼肌</span>${it.muscle} kg</div>
+                <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">體脂重</span>${it.fatKg} kg</div>
+                <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">體脂率</span>${it.fatP} %</div>
+                <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">BMI</span>${it.bmi}</div>
+                <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">內臟脂肪</span>${it.visceral}</div>
+                <div class="col-span-2 bg-blue-50 p-3 rounded-lg text-center font-bold text-blue-600"><span class="inbody-label">身體評分</span>${it.score} 分</div>
+            </div>`;
             openModal('inbody-detail-modal');
         }
 
