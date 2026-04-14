@@ -19,24 +19,28 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .input-bear { border: 1px solid var(--bear-mint); border-radius: 0.75rem; padding: 0.6rem; background: white; width: 100%; text-align: center; font-size: 0.9rem; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; backdrop-filter: blur(5px); justify-content: center; align-items: center; }
-        .diff-pos { color: #f87171; } .diff-neg { color: #34d399; }
         .inbody-label { font-size: 10px; color: #94a3b8; margin-bottom: 2px; display: block; font-weight: bold; }
         ::-webkit-scrollbar { display: none; }
         
+        /* 日期滑桿設定 */
         .calendar-wrapper { position: relative; width: 40px; height: 40px; }
         .calendar-wrapper input[type="date"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: 30; cursor: pointer; }
         .calendar-icon-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 9999px; background: white; display: flex; align-items: center; justify-content: center; color: #2dd4bf; box-shadow: 0 1px 2px rgba(0,0,0,0.05); z-index: 20; }
-        
         #date-slider { scroll-behavior: smooth; -webkit-overflow-scrolling: touch; display: flex; overflow-x: auto; gap: 0.8rem; padding: 1rem; scroll-snap-type: x mandatory; }
         .date-item { scroll-snap-align: center; flex: 0 0 52px; }
         
+        /* 歷史表格優化對齊系統 */
         .history-table { width: 100%; table-layout: fixed; font-size: 13px; border-collapse: collapse; }
-        .history-table th, .history-table td { padding: 12px 1px; vertical-align: middle; border-bottom: 1px solid #f8fafc; text-align: center; }
+        .history-table th, .history-table td { padding: 12px 1px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; text-align: center; }
         .history-table th { color: #94a3b8; font-weight: normal; font-size: 11px; }
         
-        .cell-weight-container { display: flex; align-items: baseline; justify-content: center; gap: 4px; }
-        .num-main { font-weight: bold; font-size: 14px; color: #475569; }
-        .num-diff { font-size: 11px; font-weight: 700; min-width: 38px; text-align: left; }
+        /* 體重與差值對齊專用 CSS */
+        .cell-weight-wrapper { display: flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
+        .num-main-box { width: 45px; text-align: right; font-weight: 700; color: #475569; font-size: 14px; }
+        .num-diff-box { width: 45px; text-align: left; font-size: 11px; font-weight: 700; margin-left: 6px; }
+        .diff-pos { color: #f87171; } 
+        .diff-neg { color: #34d399; }
+        .diff-none { visibility: hidden; } /* 維持占位但不顯示 */
 
         .chart-btn { padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; background: #f1f5f9; color: #94a3b8; }
         .chart-btn.active { background: #a3e4d7; color: white; }
@@ -126,11 +130,11 @@
                 <table class="history-table">
                     <thead>
                         <tr>
-                            <th style="width: 15%;">日期</th>
-                            <th style="width: 40%;">體重 (差)</th>
-                            <th style="width: 15%;">蛋白</th>
-                            <th style="width: 15%;">碳水</th>
-                            <th style="width: 15%;">🚽</th>
+                            <th style="width: 18%;">日期</th>
+                            <th style="width: 42%;">體重 (差距)</th>
+                            <th style="width: 13%;">蛋白</th>
+                            <th style="width: 13%;">碳水</th>
+                            <th style="width: 14%;">🚽</th>
                         </tr>
                     </thead>
                     <tbody id="history-table-body"></tbody>
@@ -179,7 +183,6 @@
             document.getElementById('date-picker').value = currentViewingDate; 
             renderDateSlider(); 
             updateDailyUI(); 
-            // 修正：增加延遲，確保畫面載入後滾動到今日
             setTimeout(() => {
                 const active = document.querySelector('.date-active');
                 if(active) active.scrollIntoView({ behavior:'auto', inline:'center' });
@@ -286,19 +289,32 @@
             });
         }
 
+        // 優化對齊的歷史紀錄生成
         function handleHistoryBtn() {
             openModal('history-modal');
             const tbody = document.getElementById('history-table-body');
             const dates = Object.keys(dailyDb).sort();
             tbody.innerHTML = dates.slice().reverse().map(d => {
-                const cur = dailyDb[d]; const curIdx = dates.indexOf(d); let diff = "";
+                const cur = dailyDb[d]; const curIdx = dates.indexOf(d); 
+                let diffHtml = `<div class="num-diff-box diff-none"></div>`; // 預設空位
+                
                 if(curIdx > 0 && dailyDb[dates[curIdx-1]].weight && cur.weight) {
                     const df = (cur.weight - dailyDb[dates[curIdx-1]].weight).toFixed(1);
-                    diff = `<span class="${df>0?'diff-pos':'diff-neg'} num-diff">${df>0?'+':''}${df}</span>`;
+                    if (df != 0) {
+                        const colorClass = df > 0 ? 'diff-pos' : 'diff-neg';
+                        const sign = df > 0 ? '+' : '';
+                        diffHtml = `<div class="num-diff-box ${colorClass}">${sign}${df}</div>`;
+                    }
                 }
+                
                 return `<tr onclick="changeDate('${d}');closeModal('history-modal')">
                     <td>${d.slice(5).replace('-','/')}</td>
-                    <td><div class="cell-weight-container"><span class="num-main">${cur.weight||'--'}</span>${diff}</div></td>
+                    <td>
+                        <div class="cell-weight-wrapper">
+                            <div class="num-main-box">${cur.weight||'--'}</div>
+                            ${diffHtml}
+                        </div>
+                    </td>
                     <td>${cur.pro}g</td>
                     <td>${cur.carb}g</td>
                     <td>${cur.poop?'🔵':''}</td>
