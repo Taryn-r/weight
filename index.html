@@ -30,7 +30,6 @@
         #date-slider { scroll-behavior: smooth; -webkit-overflow-scrolling: touch; display: flex; overflow-x: auto; gap: 0.8rem; padding: 1rem; scroll-snap-type: x mandatory; }
         .date-item { scroll-snap-align: center; flex: 0 0 52px; }
         
-        /* 歷史表格優化：縮小日期與體重的間隔，加大差值數字 */
         .history-table { width: 100%; table-layout: fixed; font-size: 13px; border-collapse: collapse; }
         .history-table th, .history-table td { padding: 12px 1px; vertical-align: middle; border-bottom: 1px solid #f8fafc; text-align: center; }
         .history-table th { color: #94a3b8; font-weight: normal; font-size: 11px; }
@@ -190,14 +189,12 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`page-${page}`).classList.add('active');
             document.getElementById(`nav-${page}`).classList.add('active');
-            
             if(page === 'daily') {
-                currentViewingDate = getLocalDateString(); // 預設今天
+                currentViewingDate = getLocalDateString();
                 updateDailyUI();
             } else {
                 document.getElementById('main-title').innerText = (page === 'inbody') ? 'InBody' : '設置';
             }
-            
             document.getElementById('cal-wrap').style.visibility = (page === 'settings') ? 'hidden' : 'visible';
             document.getElementById('btn-history').classList.toggle('hidden', page !== 'daily');
             document.getElementById('btn-chart').classList.toggle('hidden', page !== 'daily');
@@ -227,16 +224,13 @@
 
         function updateDailyUI() {
             if(currentPage !== 'daily') return;
-            document.getElementById('main-title').innerText = "每日紀錄"; // 標題固定
+            document.getElementById('main-title').innerText = "每日紀錄";
             const d = dailyDb[currentViewingDate] || { weight:'', pro:0, carb:0, content:'', poop: false };
             document.getElementById('view-weight').innerText = d.weight || '--';
             document.getElementById('view-pro').innerText = d.pro || 0;
             document.getElementById('view-carb').innerText = d.carb || 0;
             document.getElementById('view-content').innerText = d.content || '點擊下方輸入紀錄...';
-            
-            // 用語調整為 "今日已有上廁所"
             d.poop ? document.getElementById('view-poop').classList.remove('hidden') : document.getElementById('view-poop').classList.add('hidden');
-            
             document.getElementById('in-weight').value = d.weight;
             document.getElementById('in-pro').value = d.pro || '';
             document.getElementById('in-carb').value = d.carb || '';
@@ -254,35 +248,25 @@
 
         function openChart() { openModal('chart-modal'); updateChartRange('week'); }
         
-        // 圖表篩選邏輯：週、月、年、全部
         function updateChartRange(range) {
             document.querySelectorAll('.chart-btn').forEach(b => b.classList.toggle('active', b.dataset.range === range));
             const allDates = Object.keys(dailyDb).sort();
             const now = new Date();
             let filteredDates = [];
-
             if(range === 'week') {
                 const day = now.getDay() || 7;
                 const monday = new Date(now);
-                monday.setDate(now.getDate() - day + 1);
-                monday.setHours(0,0,0,0);
+                monday.setDate(now.getDate() - day + 1); monday.setHours(0,0,0,0);
                 const sunday = new Date(monday);
-                sunday.setDate(monday.getDate() + 6);
-                sunday.setHours(23,59,59,999);
-                filteredDates = allDates.filter(d => {
-                    const dt = new Date(d);
-                    return dt >= monday && dt <= sunday;
-                });
+                sunday.setDate(monday.getDate() + 6); sunday.setHours(23,59,59,999);
+                filteredDates = allDates.filter(d => { const dt = new Date(d); return dt >= monday && dt <= sunday; });
             } else if(range === 'month') {
                 const currentMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
                 filteredDates = allDates.filter(d => d.startsWith(currentMonth));
             } else if(range === 'year') {
                 const currentYear = `${now.getFullYear()}`;
                 filteredDates = allDates.filter(d => d.startsWith(currentYear));
-            } else {
-                filteredDates = allDates;
-            }
-
+            } else { filteredDates = allDates; }
             const weights = filteredDates.map(d => dailyDb[d].weight);
             if(weightChart) weightChart.destroy();
             weightChart = new Chart(document.getElementById('weightChart'), {
@@ -292,7 +276,6 @@
             });
         }
 
-        // 歷史紀錄間距優化
         function handleHistoryBtn() {
             openModal('history-modal');
             const tbody = document.getElementById('history-table-body');
@@ -313,7 +296,6 @@
             }).join('');
         }
 
-        // InBody 全數據處理邏輯保留
         function submitInBody() {
             const data = { 
                 id: Date.now(), 
@@ -333,21 +315,33 @@
             localStorage.setItem('bear_inbody_db', JSON.stringify(inbodyDb)); closeModal('inbody-form-modal'); renderInBodyPage();
         }
 
+        // 補回 InBody 差值計算邏輯
+        function getInBodyDiff(v, pv, goodDown = true) {
+            if(!pv) return "";
+            const df = (v - pv).toFixed(1);
+            if(df == 0) return "";
+            const isGood = (df > 0 !== goodDown);
+            return `<span class="${isGood?'text-emerald-400':'text-rose-400'} text-[10px] ml-1">${df>0?'↑':'↓'}${Math.abs(df)}</span>`;
+        }
+
         function renderInBodyPage() {
             const latestArea = document.getElementById('inbody-latest-view');
             const historyList = document.getElementById('inbody-history-list');
             if(!inbodyDb.length) { latestArea.innerHTML = '<div class="macaron-card p-10 text-center text-gray-400">尚無資料</div>'; return; }
-            const latest = inbodyDb[0];
+            const latest = inbodyDb[0]; const prev = inbodyDb[1];
             latestArea.innerHTML = `<div class="macaron-card p-6 border-t-8 border-t-blue-200" onclick="viewInBodyDetail(${latest.id})">
-                <div class="flex justify-between items-center mb-4"><span class="font-black text-slate-700">${latest.date}</span><span class="text-blue-500 font-bold">評分 ${latest.score}</span></div>
+                <div class="flex justify-between items-center mb-4"><span class="font-black text-slate-700">${latest.date}</span><span class="text-blue-500 font-bold">評分 ${latest.score}${getInBodyDiff(latest.score, prev?.score, false)}</span></div>
                 <div class="grid grid-cols-2 gap-4 text-center">
-                    <div class="bg-slate-50 p-2 rounded-xl"><p class="inbody-label">體重</p><p class="font-black">${latest.weight}kg</p></div>
-                    <div class="bg-slate-50 p-2 rounded-xl"><p class="inbody-label">骨骼肌</p><p class="font-black">${latest.muscle}kg</p></div>
-                    <div class="bg-slate-50 p-2 rounded-xl"><p class="inbody-label">體脂率</p><p class="font-black">${latest.fatP}%</p></div>
-                    <div class="bg-slate-50 p-2 rounded-xl"><p class="inbody-label">內臟脂肪</p><p class="font-black">${latest.visceral}</p></div>
+                    <div class="bg-slate-50 p-2 rounded-xl"><p class="inbody-label">體重</p><p class="font-black">${latest.weight}kg${getInBodyDiff(latest.weight, prev?.weight)}</p></div>
+                    <div class="bg-slate-50 p-2 rounded-xl"><p class="inbody-label">骨骼肌</p><p class="font-black">${latest.muscle}kg${getInBodyDiff(latest.muscle, prev?.muscle, false)}</p></div>
+                    <div class="bg-slate-50 p-2 rounded-xl"><p class="inbody-label">體脂率</p><p class="font-black">${latest.fatP}%${getInBodyDiff(latest.fatP, prev?.fatP)}</p></div>
+                    <div class="bg-slate-50 p-2 rounded-xl"><p class="inbody-label">內臟脂肪</p><p class="font-black">${latest.visceral}${getInBodyDiff(latest.visceral, prev?.visceral)}</p></div>
                 </div>
             </div>`;
-            historyList.innerHTML = inbodyDb.map(i => `<div class="macaron-card p-4 flex justify-between items-center" onclick="viewInBodyDetail(${i.id})"><div><p class="font-bold text-sm">${i.date}</p><p class="text-[10px] text-gray-400">體重 ${i.weight} / 評分 ${i.score}</p></div><button onclick="deleteInBody(${i.id}, event)" class="text-red-100 p-2"><i class="fa-solid fa-trash-can"></i></button></div>`).join('');
+            historyList.innerHTML = inbodyDb.map((i, idx) => {
+                const p = inbodyDb[idx+1];
+                return `<div class="macaron-card p-4 flex justify-between items-center" onclick="viewInBodyDetail(${i.id})"><div><p class="font-bold text-sm">${i.date}</p><p class="text-[10px] text-gray-400">體重 ${i.weight}${getInBodyDiff(i.weight, p?.weight)} / 評分 ${i.score}</p></div><button onclick="deleteInBody(${i.id}, event)" class="text-red-100 p-2"><i class="fa-solid fa-trash-can"></i></button></div>`;
+            }).join('');
         }
 
         function viewInBodyDetail(id) {
@@ -369,7 +363,6 @@
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function exportAllData() { const blob = new Blob([JSON.stringify({daily:dailyDb, inbody:inbodyDb})], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `健康備份.json`; a.click(); }
         function importAllData(e) { const r = new FileReader(); r.onload = (ev) => { const d = JSON.parse(ev.target.result); dailyDb=d.daily; inbodyDb=d.inbody; localStorage.setItem('bear_daily_db', JSON.stringify(dailyDb)); localStorage.setItem('bear_inbody_db', JSON.stringify(inbodyDb)); location.reload(); }; r.readAsText(e.target.files[0]); }
-
         init();
     </script>
 </body></html>
