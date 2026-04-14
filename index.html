@@ -179,6 +179,11 @@
             document.getElementById('date-picker').value = currentViewingDate; 
             renderDateSlider(); 
             updateDailyUI(); 
+            // 修正：增加延遲，確保畫面載入後滾動到今日
+            setTimeout(() => {
+                const active = document.querySelector('.date-active');
+                if(active) active.scrollIntoView({ behavior:'auto', inline:'center' });
+            }, 300);
         }
 
         function handleTitleClick() { if(currentPage === 'daily') changeDate(getLocalDateString()); }
@@ -191,7 +196,12 @@
             document.getElementById(`nav-${page}`).classList.add('active');
             if(page === 'daily') {
                 currentViewingDate = getLocalDateString();
+                renderDateSlider();
                 updateDailyUI();
+                setTimeout(() => {
+                    const active = document.querySelector('.date-active');
+                    if(active) active.scrollIntoView({ behavior:'smooth', inline:'center' });
+                }, 100);
             } else {
                 document.getElementById('main-title').innerText = (page === 'inbody') ? 'InBody' : '設置';
             }
@@ -315,7 +325,6 @@
             localStorage.setItem('bear_inbody_db', JSON.stringify(inbodyDb)); closeModal('inbody-form-modal'); renderInBodyPage();
         }
 
-        // 補回 InBody 差值計算邏輯
         function getInBodyDiff(v, pv, goodDown = true) {
             if(!pv) return "";
             const df = (v - pv).toFixed(1);
