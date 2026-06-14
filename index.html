@@ -289,14 +289,13 @@
             });
         }
 
-        // 優化對齊的歷史紀錄生成
         function handleHistoryBtn() {
             openModal('history-modal');
             const tbody = document.getElementById('history-table-body');
             const dates = Object.keys(dailyDb).sort();
             tbody.innerHTML = dates.slice().reverse().map(d => {
                 const cur = dailyDb[d]; const curIdx = dates.indexOf(d); 
-                let diffHtml = `<div class="num-diff-box diff-none"></div>`; // 預設空位
+                let diffHtml = `<div class="num-diff-box diff-none"></div>`; 
                 
                 if(curIdx > 0 && dailyDb[dates[curIdx-1]].weight && cur.weight) {
                     const df = (cur.weight - dailyDb[dates[curIdx-1]].weight).toFixed(1);
@@ -369,15 +368,20 @@
             }).join('');
         }
 
+        // 修改這裡：顯示全 11 項完整內容數據
         function viewInBodyDetail(id) {
             const it = inbodyDb.find(i => i.id === id); if(!it) return;
             document.getElementById('inbody-detail-content').innerHTML = `<h3 class="text-center font-black mb-4">${it.date} 完整報告</h3><div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="col-span-2 bg-slate-50 p-2 rounded-lg"><span class="inbody-label">測量日期</span>${it.date}</div>
                 <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">體重</span>${it.weight} kg</div>
                 <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">骨骼肌</span>${it.muscle} kg</div>
                 <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">體脂重</span>${it.fatKg} kg</div>
-                <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">體脂率</span>${it.fatP} %</div>
                 <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">BMI</span>${it.bmi}</div>
+                <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">體脂率</span>${it.fatP} %</div>
+                <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">腰臀比 (WHR)</span>${it.whr}</div>
+                <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">水分比 (%)</span>${it.moist} %</div>
                 <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">內臟脂肪</span>${it.visceral}</div>
+                <div class="bg-gray-50 p-2 rounded-lg"><span class="inbody-label">基礎代謝</span>${it.bmr} kcal</div>
                 <div class="col-span-2 bg-blue-50 p-3 rounded-lg text-center font-bold text-blue-600"><span class="inbody-label">身體評分</span>${it.score} 分</div>
             </div>`;
             openModal('inbody-detail-modal');
